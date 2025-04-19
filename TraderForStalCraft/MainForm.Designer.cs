@@ -96,6 +96,7 @@ namespace TraderForStalCraft
             startButton.TabIndex = 0;
             startButton.Text = "Запустить";
             startButton.UseVisualStyleBackColor = true;
+            startButton.Click += startButton_Click;
             // 
             // stopButton
             // 
@@ -106,6 +107,7 @@ namespace TraderForStalCraft
             stopButton.TabIndex = 1;
             stopButton.Text = "Остановить";
             stopButton.UseVisualStyleBackColor = true;
+            stopButton.Click += stopButton_Click;
             // 
             // itemsDataGridView
             // 

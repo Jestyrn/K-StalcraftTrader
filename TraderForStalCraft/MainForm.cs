@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Text.Json;
 using OfficeOpenXml;
+using TraderForStalCraft.Scripts;
 
 namespace TraderForStalCraft
 {
@@ -221,6 +222,16 @@ namespace TraderForStalCraft
 
             minDelayInput.Value = returned.min;
             maxDelayInput.Value = returned.max;
+        }
+
+        private void startButton_Click(object sender, EventArgs e)
+        {
+            StartingScript.Start();
+        }
+
+        private void stopButton_Click(object sender, EventArgs e)
+        {
+            StartingScript.Stop();
         }
     }
 
