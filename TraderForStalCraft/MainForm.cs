@@ -10,8 +10,17 @@ namespace TraderForStalCraft
 
         public MainForm()
         {
+            string filePath1 = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
+            string filePath2 = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
+
             InitializeComponent();
+
+            if (File.Exists(filePath1))
+                LoadFromJsonDataGrid(filePath1);
+            if (File.Exists(filePath2))
+                LoadFromJsonRandomize(filePath2);
         }
+
 
         private void dragDropInfoLabel_DragEnter(object sender, DragEventArgs e)
         {
@@ -110,6 +119,109 @@ namespace TraderForStalCraft
                 trackedItemsDataGridView.Rows.Add(products[i].Name, products[i].Price, products[i].Proirity);
             }
         }
+
+        private void SaveDataButton_Click(object sender, EventArgs e)
+        {
+            List<Product> products = new List<Product>();
+
+            for (int i = 0; i < trackedItemsDataGridView.Rows.Count; i++)
+            {
+                products.Add(new Product
+                {
+                    Name = trackedItemsDataGridView[0, i].Value.ToString(),
+                    Price = trackedItemsDataGridView[1, i].Value.ToString(),
+                    Proirity = trackedItemsDataGridView[2, i].Value.ToString(),
+                });
+            }
+
+            SaveToJsonFile(products);
+        }
+
+        private void SaveToJsonFile(List<Product> products)
+        {
+            string baseDirectory = Directory.GetCurrentDirectory();
+            string filePath = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
+            string json;
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true, // Красивое форматирование
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // Для кириллицы
+                };
+                json = JsonSerializer.Serialize(products, options);
+
+                if (!File.Exists(baseDirectory))
+                    Directory.CreateDirectory(baseDirectory + "\\Data\\");
+                if (!File.Exists(baseDirectory + "\\Data\\"))
+                    Directory.CreateDirectory(baseDirectory + "\\Data\\Serialize\\");
+                File.WriteAllText(filePath, json);
+            }
+            catch
+            {
+                MessageBox.Show("Ошибка", "Не удолось сохранить данные.");
+                return;
+            }
+
+        }
+
+        private void LoadFromJsonDataGrid(string filePath)
+        {
+            string json = File.ReadAllText(filePath);
+            var returned = JsonSerializer.Deserialize<List<Product>>(json) ?? new List<Product>();
+
+            for (int i = 0; i < returned.Count; i++)
+            {
+                trackedItemsDataGridView.Rows.Add(returned[i].Name, returned[i].Price, returned[i].Proirity);
+            }
+        }
+
+        private void DeleteDataButton_Click(object sender, EventArgs e)
+        {
+            string filePath = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+            trackedItemsDataGridView.Rows.Clear();
+        }
+
+        private void minDelayInput_ValueChanged(object sender, EventArgs e)
+        {
+            string baseDirectory = Directory.GetCurrentDirectory();
+            string filePath = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
+            string json;
+            DataRandom random = new DataRandom();
+            random.min = minDelayInput.Value;
+            random.max = maxDelayInput.Value;
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true, // Красивое форматирование
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // Для кириллицы
+                };
+                json = JsonSerializer.Serialize(random, options);
+
+                if (!File.Exists(baseDirectory))
+                    Directory.CreateDirectory(baseDirectory + "\\Data\\");
+                if (!File.Exists(baseDirectory + "\\Data\\"))
+                    Directory.CreateDirectory(baseDirectory + "\\Data\\Serialize\\");
+                File.WriteAllText(filePath, json);
+            }
+            catch
+            {
+                MessageBox.Show("Ошибка", "Не удолось сохранить данные.");
+                return;
+            }
+        }
+
+        private void LoadFromJsonRandomize(string filePath)
+        {
+            string json = File.ReadAllText(filePath);
+            var returned = JsonSerializer.Deserialize<DataRandom>(json) ?? new DataRandom();
+
+            minDelayInput.Value = returned.min;
+            maxDelayInput.Value = returned.max;
+        }
     }
 
     public class Product
@@ -117,5 +229,10 @@ namespace TraderForStalCraft
         public string Name { get; set; }
         public string Price { get; set; }
         public string Proirity { get; set; }
+    }
+    public class DataRandom
+    {
+        public decimal min {  get; set; }
+        public decimal max { get; set; }
     }
 }

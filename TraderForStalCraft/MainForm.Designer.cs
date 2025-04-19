@@ -211,21 +211,23 @@ namespace TraderForStalCraft
             // 
             // DeleteDataButton
             // 
-            DeleteDataButton.Location = new Point(620, 436);
+            DeleteDataButton.Location = new Point(625, 437);
             DeleteDataButton.Name = "DeleteDataButton";
-            DeleteDataButton.Size = new Size(230, 30);
+            DeleteDataButton.Size = new Size(225, 30);
             DeleteDataButton.TabIndex = 0;
             DeleteDataButton.Text = "Очистить таблицу";
             DeleteDataButton.UseVisualStyleBackColor = true;
+            DeleteDataButton.Click += DeleteDataButton_Click;
             // 
             // SaveDataButton
             // 
             SaveDataButton.Location = new Point(350, 437);
             SaveDataButton.Name = "SaveDataButton";
-            SaveDataButton.Size = new Size(230, 30);
+            SaveDataButton.Size = new Size(225, 30);
             SaveDataButton.TabIndex = 0;
             SaveDataButton.Text = "Сохранить таблицу";
             SaveDataButton.UseVisualStyleBackColor = true;
+            SaveDataButton.Click += SaveDataButton_Click;
             // 
             // loadItemsButton
             // 
@@ -247,6 +249,7 @@ namespace TraderForStalCraft
             minDelayInput.TabIndex = 2;
             toolTip.SetToolTip(minDelayInput, "Минимальная задержка (мс)");
             minDelayInput.Value = new decimal(new int[] { 500, 0, 0, 0 });
+            minDelayInput.ValueChanged += minDelayInput_ValueChanged;
             // 
             // maxDelayInput
             // 

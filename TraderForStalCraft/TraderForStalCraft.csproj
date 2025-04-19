@@ -13,4 +13,9 @@
     <PackageReference Include="EPPlus" Version="8.0.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\Blueprints\" />
+    <Folder Include="Data\Serialize\" />
+  </ItemGroup>
+
 </Project>
