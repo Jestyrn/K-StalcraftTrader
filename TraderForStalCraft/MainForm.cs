@@ -8,11 +8,13 @@ namespace TraderForStalCraft
     public partial class MainForm : Form
     {
         private string mind = "";
+        private StartingScript script;
 
         public MainForm()
         {
             string filePath1 = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
             string filePath2 = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
+            script = new StartingScript();
 
             InitializeComponent();
 
@@ -224,14 +226,24 @@ namespace TraderForStalCraft
             maxDelayInput.Value = returned.max;
         }
 
-        private void startButton_Click(object sender, EventArgs e)
+        private async void startButton_Click(object sender, EventArgs e)
         {
-            StartingScript.Start();
+            startButton.Enabled = false;
+            stopButton.Enabled = true;
+
+            Thread task = new Thread(() =>
+            {
+                script.Start();
+            });
+
+            task.Start();
         }
 
         private void stopButton_Click(object sender, EventArgs e)
         {
-            StartingScript.Stop();
+            stopButton.Enabled = false;
+            startButton.Enabled = true;
+            script.Stop();
         }
     }
 
