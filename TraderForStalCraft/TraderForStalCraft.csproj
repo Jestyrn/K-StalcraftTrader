@@ -10,14 +10,108 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Data\Blueprints\1pageRecognition.png" />
+    <None Remove="Data\Blueprints\amountRecognition.png" />
+    <None Remove="Data\Blueprints\auctionRecognition.png" />
+    <None Remove="Data\Blueprints\balanceRecognition.png" />
+    <None Remove="Data\Blueprints\buyoutRecognition.png" />
+    <None Remove="Data\Blueprints\buyRecognition.png" />
+    <None Remove="Data\Blueprints\confirmRecognition.png" />
+    <None Remove="Data\Blueprints\page10.png" />
+    <None Remove="Data\Blueprints\page11.png" />
+    <None Remove="Data\Blueprints\page12.png" />
+    <None Remove="Data\Blueprints\page13.png" />
+    <None Remove="Data\Blueprints\page2.png" />
+    <None Remove="Data\Blueprints\page3.png" />
+    <None Remove="Data\Blueprints\page4.png" />
+    <None Remove="Data\Blueprints\page5.png" />
+    <None Remove="Data\Blueprints\page6.png" />
+    <None Remove="Data\Blueprints\page7.png" />
+    <None Remove="Data\Blueprints\page8.png" />
+    <None Remove="Data\Blueprints\page9.png" />
+    <None Remove="Data\Blueprints\scrollRecognition.png" />
+    <None Remove="Data\Blueprints\searchField.png" />
+    <None Remove="Data\Blueprints\searchRecognition.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Emgu.CV" Version="4.10.0.5680" />
+    <PackageReference Include="Emgu.CV.runtime.windows" Version="4.10.0.5680" />
     <PackageReference Include="EPPlus" Version="8.0.2" />
     <PackageReference Include="Tesseract" Version="5.2.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\Blueprints\" />
     <Folder Include="Data\Serialize\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Data\Blueprints\1pageRecognition.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\amountRecognition.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\auctionRecognition.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\balanceRecognition.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\buyoutRecognition.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\buyRecognition.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\confirmRecognition.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page10.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page11.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page12.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page13.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page3.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page4.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page5.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page6.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page7.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page8.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page9.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\scrollRecognition.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\searchField.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\searchRecognition.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

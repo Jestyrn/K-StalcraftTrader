@@ -12,16 +12,16 @@ namespace TraderForStalCraft
 
         public MainForm()
         {
-            string filePath1 = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
-            string filePath2 = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
+            string pathToSerilize = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
+            string pathToRandomize = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
             script = new StartingScript();
 
             InitializeComponent();
 
-            if (File.Exists(filePath1))
-                LoadFromJsonDataGrid(filePath1);
-            if (File.Exists(filePath2))
-                LoadFromJsonRandomize(filePath2);
+            if (File.Exists(pathToSerilize))
+                LoadFromJsonDataGrid(pathToSerilize);
+            if (File.Exists(pathToRandomize))
+                LoadFromJsonRandomize(pathToRandomize);
         }
 
 
@@ -103,7 +103,6 @@ namespace TraderForStalCraft
                             {
                                 Name = temp[0],
                                 Price = temp[1],
-                                Proirity = temp[2]
                             });
                         }
                         break;
@@ -119,7 +118,7 @@ namespace TraderForStalCraft
 
             for (int i = 0; i < products.Count; i++)
             {
-                trackedItemsDataGridView.Rows.Add(products[i].Name, products[i].Price, products[i].Proirity);
+                trackedItemsDataGridView.Rows.Add(products[i].Name, products[i].Price);
             }
         }
 
@@ -133,7 +132,6 @@ namespace TraderForStalCraft
                 {
                     Name = trackedItemsDataGridView[0, i].Value.ToString(),
                     Price = trackedItemsDataGridView[1, i].Value.ToString(),
-                    Proirity = trackedItemsDataGridView[2, i].Value.ToString(),
                 });
             }
 
@@ -175,7 +173,7 @@ namespace TraderForStalCraft
 
             for (int i = 0; i < returned.Count; i++)
             {
-                trackedItemsDataGridView.Rows.Add(returned[i].Name, returned[i].Price, returned[i].Proirity);
+                trackedItemsDataGridView.Rows.Add(returned[i].Name, returned[i].Price);
             }
         }
 
@@ -187,14 +185,14 @@ namespace TraderForStalCraft
             trackedItemsDataGridView.Rows.Clear();
         }
 
-        private void minDelayInput_ValueChanged(object sender, EventArgs e)
+        private void maxDelayInput_ValueChanged(object sender, EventArgs e)
         {
             string baseDirectory = Directory.GetCurrentDirectory();
             string filePath = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
             string json;
             DataRandom random = new DataRandom();
-            random.min = minDelayInput.Value;
-            random.max = maxDelayInput.Value;
+            random.Delay = scrolDelay.Value;
+            random.Speed = inputScrol.Value;
             try
             {
                 var options = new JsonSerializerOptions
@@ -222,8 +220,8 @@ namespace TraderForStalCraft
             string json = File.ReadAllText(filePath);
             var returned = JsonSerializer.Deserialize<DataRandom>(json) ?? new DataRandom();
 
-            minDelayInput.Value = returned.min;
-            maxDelayInput.Value = returned.max;
+            scrolDelay.Value = returned.Delay;
+            inputScrol.Value = returned.Speed;
         }
 
         private async void startButton_Click(object sender, EventArgs e)
@@ -245,17 +243,21 @@ namespace TraderForStalCraft
             startButton.Enabled = true;
             script.Stop();
         }
+
+        private void scrolDelay_ValueChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 
     public class Product
     {
         public string Name { get; set; }
         public string Price { get; set; }
-        public string Proirity { get; set; }
     }
     public class DataRandom
     {
-        public decimal min {  get; set; }
-        public decimal max { get; set; }
+        public decimal Delay {  get; set; }
+        public decimal Speed { get; set; }
     }
 }

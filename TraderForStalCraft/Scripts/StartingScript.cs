@@ -33,27 +33,29 @@ namespace TraderForStalCraft.Scripts
                 MessageBox.Show("Убедитесь что Вы открыли вкладку с аукционом");
                 while (_isStarted)
                 {
-                    string templatesFolder = Directory.GetCurrentDirectory() + @"\Data\Blueprints";
+                    CvInvoke.Init();
                     Bitmap screen = MakeScreenshot();
-                    Bitmap template = new Bitmap(Image.FromFile(templatesFolder + @"\auctionRecognition.png"));
-                    FindAuctionButton(screen, template);
+
+                    Point? auctionButtonCoordinateats = FindMatch(screen, TakeTemplate(@"\auctionRecognition.png"));
+                    // Нажать на кнопку по координатам (аукцион)
+
+                    Point? searchFieldCoordinates = FindMatch(screen, TakeTemplate(@"\searchField.png"));
+                    // Нажать на кнопку по координатам (поле поиска)
+                    // Ввод текста
+
+                    Point? searchButtonCoordinates = FindMatch(screen, TakeTemplate(@"\searchRecognition.png"));
+                    // Нажать на кнопку по координатам (кнопка поиска)
+
+                    // Сортировка
+                    screen.Dispose();
+                    screen = MakeScreenshot();
+
+                    // Посмотреть цены
+
+                    // условие просмотр - Купить \ Ставка \ Скролл \ Некст Пейдж
+
                     
-
-                    /*
-                
-                    1. узнать запущена ли игра
-                    2. убедится в открытии аукциона
-                    3. ввод нужного товара
-                    4. установка сортировки
-                    5. условие стоимости: товар < желаемо
-                        + покупаем
-                        - ищем дальше
-                    6. условие товары в области видимости есть?:
-                            условие скролл возможен?
-                                + Скролл
-                                - Некст стр
-
-                    */
+                    screen.Dispose();
                 }
             }
             else
@@ -63,27 +65,30 @@ namespace TraderForStalCraft.Scripts
             }
         }
 
-        private Bitmap MakeScreenshot()
+        private Bitmap TakeTemplate(string templatePath)
         {
-            string path = Directory.GetCurrentDirectory() + @"\Data\MainCheck.png";
-
-            using (Bitmap screen = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height))
-            {
-                using (Graphics g = Graphics.FromImage(screen))
-                {
-                    g.CopyFromScreen(
-                        Screen.PrimaryScreen.Bounds.X,
-                        Screen.PrimaryScreen.Bounds.Y,
-                        0,0,
-                        screen.Size,
-                        CopyPixelOperation.SourceCopy);
-                }
-
-                return screen;
-            }
+            string templatesFolder = Directory.GetCurrentDirectory() + @"\Data\Blueprints";
+            Bitmap template = new Bitmap(Image.FromFile(templatesFolder + templatePath));
+            return template;
         }
 
-        private Point? FindAuctionButton(Bitmap Screen, Bitmap templateImage, double hold = 0.8)
+        private Bitmap MakeScreenshot()
+        {
+            Bitmap screen = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
+            
+            using (Graphics g = Graphics.FromImage(screen))
+            {
+                g.CopyFromScreen(
+                    Screen.PrimaryScreen.Bounds.X,
+                    Screen.PrimaryScreen.Bounds.Y,
+                    0,0,
+                    screen.Size,
+                    CopyPixelOperation.SourceCopy);
+            }
+            return screen;
+        }
+
+        private Point? FindMatch(Bitmap Screen, Bitmap templateImage, double hold = 0.8)
         {
             using (Image<Bgr, byte> source = ConvertToNeedImage(Screen))
             using (Image<Bgr, byte> template = ConvertToNeedImage(templateImage))

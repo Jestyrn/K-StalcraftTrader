@@ -22,7 +22,6 @@ namespace TraderForStalCraft
             components = new System.ComponentModel.Container();
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
             TabControll = new TabControl();
@@ -30,20 +29,25 @@ namespace TraderForStalCraft
             startButton = new Button();
             stopButton = new Button();
             itemsDataGridView = new DataGridView();
+            Column1 = new DataGridViewTextBoxColumn();
+            Column2 = new DataGridViewTextBoxColumn();
+            Column3 = new DataGridViewTextBoxColumn();
+            Column4 = new DataGridViewTextBoxColumn();
             balanceLabel = new Label();
             foundItemsLabel = new Label();
             bidsMadeLabel = new Label();
             SettingsPage = new TabPage();
+            inputScrol = new NumericUpDown();
+            scrolDelay = new NumericUpDown();
             dragDropPanel = new Panel();
             dragDropInfoLabel = new Label();
             DeleteDataButton = new Button();
             SaveDataButton = new Button();
             loadItemsButton = new Button();
-            minDelayInput = new NumericUpDown();
-            maxDelayInput = new NumericUpDown();
+            label3 = new Label();
+            label2 = new Label();
             label1 = new Label();
             delayRangeLabel = new Label();
-            toLabel = new Label();
             trackedItemsLabel = new Label();
             trackedItemsDataGridView = new DataGridView();
             dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
@@ -55,9 +59,9 @@ namespace TraderForStalCraft
             MainPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)itemsDataGridView).BeginInit();
             SettingsPage.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)inputScrol).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)scrolDelay).BeginInit();
             dragDropPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)minDelayInput).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)maxDelayInput).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackedItemsDataGridView).BeginInit();
             SuspendLayout();
             // 
@@ -124,6 +128,7 @@ namespace TraderForStalCraft
             dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
             itemsDataGridView.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             itemsDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            itemsDataGridView.Columns.AddRange(new DataGridViewColumn[] { Column1, Column2, Column3, Column4 });
             dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle2.BackColor = SystemColors.Window;
             dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
@@ -138,6 +143,30 @@ namespace TraderForStalCraft
             itemsDataGridView.ReadOnly = true;
             itemsDataGridView.Size = new Size(840, 400);
             itemsDataGridView.TabIndex = 2;
+            // 
+            // Column1
+            // 
+            Column1.HeaderText = "Название";
+            Column1.Name = "Column1";
+            Column1.ReadOnly = true;
+            // 
+            // Column2
+            // 
+            Column2.HeaderText = "Стоимость";
+            Column2.Name = "Column2";
+            Column2.ReadOnly = true;
+            // 
+            // Column3
+            // 
+            Column3.HeaderText = "Лот";
+            Column3.Name = "Column3";
+            Column3.ReadOnly = true;
+            // 
+            // Column4
+            // 
+            Column4.HeaderText = "Желаемо";
+            Column4.Name = "Column4";
+            Column4.ReadOnly = true;
             // 
             // balanceLabel
             // 
@@ -168,15 +197,16 @@ namespace TraderForStalCraft
             // 
             // SettingsPage
             // 
+            SettingsPage.Controls.Add(inputScrol);
+            SettingsPage.Controls.Add(scrolDelay);
             SettingsPage.Controls.Add(dragDropPanel);
             SettingsPage.Controls.Add(DeleteDataButton);
             SettingsPage.Controls.Add(SaveDataButton);
             SettingsPage.Controls.Add(loadItemsButton);
-            SettingsPage.Controls.Add(minDelayInput);
-            SettingsPage.Controls.Add(maxDelayInput);
+            SettingsPage.Controls.Add(label3);
+            SettingsPage.Controls.Add(label2);
             SettingsPage.Controls.Add(label1);
             SettingsPage.Controls.Add(delayRangeLabel);
-            SettingsPage.Controls.Add(toLabel);
             SettingsPage.Controls.Add(trackedItemsLabel);
             SettingsPage.Controls.Add(trackedItemsDataGridView);
             SettingsPage.Location = new Point(4, 24);
@@ -186,6 +216,26 @@ namespace TraderForStalCraft
             SettingsPage.TabIndex = 1;
             SettingsPage.Text = "Настройки";
             SettingsPage.UseVisualStyleBackColor = true;
+            // 
+            // inputScrol
+            // 
+            inputScrol.Location = new Point(154, 277);
+            inputScrol.Maximum = new decimal(new int[] { 5000, 0, 0, 0 });
+            inputScrol.Minimum = new decimal(new int[] { 1000, 0, 0, 0 });
+            inputScrol.Name = "inputScrol";
+            inputScrol.Size = new Size(54, 23);
+            inputScrol.TabIndex = 11;
+            inputScrol.Value = new decimal(new int[] { 5000, 0, 0, 0 });
+            // 
+            // scrolDelay
+            // 
+            scrolDelay.Location = new Point(154, 239);
+            scrolDelay.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            scrolDelay.Name = "scrolDelay";
+            scrolDelay.Size = new Size(54, 23);
+            scrolDelay.TabIndex = 11;
+            scrolDelay.Value = new decimal(new int[] { 500, 0, 0, 0 });
+            scrolDelay.ValueChanged += scrolDelay_ValueChanged;
             // 
             // dragDropPanel
             // 
@@ -241,55 +291,41 @@ namespace TraderForStalCraft
             loadItemsButton.UseVisualStyleBackColor = true;
             loadItemsButton.Click += loadItemsButton_Click;
             // 
-            // minDelayInput
+            // label3
             // 
-            minDelayInput.Location = new Point(21, 273);
-            minDelayInput.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
-            minDelayInput.Minimum = new decimal(new int[] { 100, 0, 0, 0 });
-            minDelayInput.Name = "minDelayInput";
-            minDelayInput.Size = new Size(100, 23);
-            minDelayInput.TabIndex = 2;
-            toolTip.SetToolTip(minDelayInput, "Минимальная задержка (мс)");
-            minDelayInput.Value = new decimal(new int[] { 500, 0, 0, 0 });
-            minDelayInput.ValueChanged += minDelayInput_ValueChanged;
+            label3.AutoSize = true;
+            label3.Location = new Point(12, 285);
+            label3.Name = "label3";
+            label3.Size = new Size(119, 15);
+            label3.TabIndex = 4;
+            label3.Text = "Скорость ввода (мс)";
             // 
-            // maxDelayInput
+            // label2
             // 
-            maxDelayInput.Location = new Point(219, 273);
-            maxDelayInput.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
-            maxDelayInput.Minimum = new decimal(new int[] { 100, 0, 0, 0 });
-            maxDelayInput.Name = "maxDelayInput";
-            maxDelayInput.Size = new Size(100, 23);
-            maxDelayInput.TabIndex = 3;
-            toolTip.SetToolTip(maxDelayInput, "Максимальная задержка (мс)");
-            maxDelayInput.Value = new decimal(new int[] { 1500, 0, 0, 0 });
+            label2.AutoSize = true;
+            label2.Location = new Point(12, 247);
+            label2.Name = "label2";
+            label2.Size = new Size(124, 15);
+            label2.TabIndex = 4;
+            label2.Text = "Между действий (мс)";
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(12, 255);
+            label1.Location = new Point(12, 209);
             label1.Name = "label1";
-            label1.Size = new Size(142, 15);
+            label1.Size = new Size(119, 15);
             label1.TabIndex = 4;
-            label1.Text = "Задержка действий (мс):";
+            label1.Text = "Задержка действий :";
             // 
             // delayRangeLabel
             // 
             delayRangeLabel.AutoSize = true;
             delayRangeLabel.Location = new Point(12, 66);
             delayRangeLabel.Name = "delayRangeLabel";
-            delayRangeLabel.Size = new Size(295, 135);
+            delayRangeLabel.Size = new Size(211, 105);
             delayRangeLabel.TabIndex = 4;
-            delayRangeLabel.Text = resources.GetString("delayRangeLabel.Text");
-            // 
-            // toLabel
-            // 
-            toLabel.AutoSize = true;
-            toLabel.Location = new Point(219, 255);
-            toLabel.Name = "toLabel";
-            toLabel.Size = new Size(20, 15);
-            toLabel.TabIndex = 5;
-            toLabel.Text = "до";
+            delayRangeLabel.Text = "Форматы принимаемых фалов:\r\n1. \"*.txt\" - текстовый формат \r\n2. \"*.xcls\"/\"*.xls\" - табличный формат\r\n\r\nПример заполнения:\r\nТекстовые - Name:Price\r\nТабличные - Временно не работает";
             // 
             // trackedItemsLabel
             // 
@@ -315,7 +351,7 @@ namespace TraderForStalCraft
             dataGridViewCellStyle3.WrapMode = DataGridViewTriState.True;
             trackedItemsDataGridView.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
             trackedItemsDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            trackedItemsDataGridView.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn1, dataGridViewTextBoxColumn2, dataGridViewTextBoxColumn3 });
+            trackedItemsDataGridView.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn1, dataGridViewTextBoxColumn2 });
             dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle4.BackColor = SystemColors.Window;
             dataGridViewCellStyle4.Font = new Font("Segoe UI", 9F);
@@ -345,9 +381,7 @@ namespace TraderForStalCraft
             // 
             // dataGridViewTextBoxColumn3
             // 
-            dataGridViewTextBoxColumn3.HeaderText = "Приоритет";
             dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
-            dataGridViewTextBoxColumn3.ReadOnly = true;
             // 
             // MainForm
             // 
@@ -366,9 +400,9 @@ namespace TraderForStalCraft
             ((System.ComponentModel.ISupportInitialize)itemsDataGridView).EndInit();
             SettingsPage.ResumeLayout(false);
             SettingsPage.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)inputScrol).EndInit();
+            ((System.ComponentModel.ISupportInitialize)scrolDelay).EndInit();
             dragDropPanel.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)minDelayInput).EndInit();
-            ((System.ComponentModel.ISupportInitialize)maxDelayInput).EndInit();
             ((System.ComponentModel.ISupportInitialize)trackedItemsDataGridView).EndInit();
             ResumeLayout(false);
         }
@@ -385,10 +419,7 @@ namespace TraderForStalCraft
         private System.Windows.Forms.Label foundItemsLabel;
         private System.Windows.Forms.Label bidsMadeLabel;
         private System.Windows.Forms.Button loadItemsButton;
-        private System.Windows.Forms.NumericUpDown minDelayInput;
-        private System.Windows.Forms.NumericUpDown maxDelayInput;
         private System.Windows.Forms.Label delayRangeLabel;
-        private System.Windows.Forms.Label toLabel;
         private System.Windows.Forms.Panel dragDropPanel;
         private System.Windows.Forms.Label dragDropInfoLabel;
         private System.Windows.Forms.ToolTip toolTip;
@@ -397,9 +428,17 @@ namespace TraderForStalCraft
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private DataGridViewTextBoxColumn Column1;
+        private DataGridViewTextBoxColumn Column2;
+        private DataGridViewTextBoxColumn Column3;
+        private DataGridViewTextBoxColumn Column4;
         private Label label1;
         private Button DeleteDataButton;
         private Button SaveDataButton;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private NumericUpDown scrolDelay;
+        private Label label2;
+        private NumericUpDown inputScrol;
+        private Label label3;
     }
 }
