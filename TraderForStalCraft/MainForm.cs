@@ -14,9 +14,11 @@ namespace TraderForStalCraft
         {
             string pathToSerilize = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
             string pathToRandomize = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
-            script = new StartingScript();
+
 
             InitializeComponent();
+
+            script = new StartingScript(scrolDelay.Value, inputScrol.Value);
 
             if (File.Exists(pathToSerilize))
                 LoadFromJsonDataGrid(pathToSerilize);
@@ -185,8 +187,52 @@ namespace TraderForStalCraft
             trackedItemsDataGridView.Rows.Clear();
         }
 
-        private void maxDelayInput_ValueChanged(object sender, EventArgs e)
+        private void LoadFromJsonRandomize(string filePath)
         {
+            string json = File.ReadAllText(filePath);
+            var returned = JsonSerializer.Deserialize<DataRandom>(json) ?? new DataRandom();
+
+            scrolDelay.Value = returned.Delay;
+            inputScrol.Value = returned.Speed;
+        }
+
+        private async void startButton_Click(object sender, EventArgs e)
+        {
+            startButton.Enabled = false;
+            stopButton.Enabled = true;
+
+            Dictionary<string, int> data = new Dictionary<string, int>();
+            for (int i = 0; i < trackedItemsDataGridView.Rows.Count; i++)
+            {
+                data.Add(trackedItemsDataGridView[0,i].Value.ToString(), Convert.ToInt32(trackedItemsDataGridView[1,i].Value));
+            }
+
+            Thread task = new Thread(() =>
+            {
+                script.Start(data);
+            });
+
+            task.Start();
+        }
+
+        private void stopButton_Click(object sender, EventArgs e)
+        {
+            stopButton.Enabled = false;
+            startButton.Enabled = true;
+            script.Stop();
+        }
+
+        private void scrolDelay_ValueChanged(object sender, EventArgs e)
+        {
+            if (scrolDelay.Value < scrolDelay.Minimum)
+            {
+                scrolDelay.Value = scrolDelay.Minimum;
+            }
+            if (scrolDelay.Value > scrolDelay.Maximum)
+            {
+                scrolDelay.Value = scrolDelay.Maximum;
+            }
+
             string baseDirectory = Directory.GetCurrentDirectory();
             string filePath = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
             string json;
@@ -215,38 +261,43 @@ namespace TraderForStalCraft
             }
         }
 
-        private void LoadFromJsonRandomize(string filePath)
+        private void inputScrol_ValueChanged(object sender, EventArgs e)
         {
-            string json = File.ReadAllText(filePath);
-            var returned = JsonSerializer.Deserialize<DataRandom>(json) ?? new DataRandom();
-
-            scrolDelay.Value = returned.Delay;
-            inputScrol.Value = returned.Speed;
-        }
-
-        private async void startButton_Click(object sender, EventArgs e)
-        {
-            startButton.Enabled = false;
-            stopButton.Enabled = true;
-
-            Thread task = new Thread(() =>
+            if (inputScrol.Value < inputScrol.Minimum)
             {
-                script.Start();
-            });
+                inputScrol.Value = inputScrol.Minimum;
+            }
+            if (inputScrol.Value > inputScrol.Maximum)
+            {
+                inputScrol.Value = inputScrol.Maximum;
+            }
 
-            task.Start();
-        }
+            string baseDirectory = Directory.GetCurrentDirectory();
+            string filePath = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
+            string json;
+            DataRandom random = new DataRandom();
+            random.Delay = scrolDelay.Value;
+            random.Speed = inputScrol.Value;
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true, // Красивое форматирование
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // Для кириллицы
+                };
+                json = JsonSerializer.Serialize(random, options);
 
-        private void stopButton_Click(object sender, EventArgs e)
-        {
-            stopButton.Enabled = false;
-            startButton.Enabled = true;
-            script.Stop();
-        }
-
-        private void scrolDelay_ValueChanged(object sender, EventArgs e)
-        {
-
+                if (!File.Exists(baseDirectory))
+                    Directory.CreateDirectory(baseDirectory + "\\Data\\");
+                if (!File.Exists(baseDirectory + "\\Data\\"))
+                    Directory.CreateDirectory(baseDirectory + "\\Data\\Serialize\\");
+                File.WriteAllText(filePath, json);
+            }
+            catch
+            {
+                MessageBox.Show("Ошибка", "Не удолось сохранить данные.");
+                return;
+            }
         }
     }
 

@@ -52,7 +52,6 @@ namespace TraderForStalCraft
             trackedItemsDataGridView = new DataGridView();
             dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn3 = new DataGridViewTextBoxColumn();
             toolTip = new ToolTip(components);
             backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             TabControll.SuspendLayout();
@@ -226,6 +225,7 @@ namespace TraderForStalCraft
             inputScrol.Size = new Size(54, 23);
             inputScrol.TabIndex = 11;
             inputScrol.Value = new decimal(new int[] { 5000, 0, 0, 0 });
+            inputScrol.ValueChanged += inputScrol_ValueChanged;
             // 
             // scrolDelay
             // 
@@ -379,10 +379,6 @@ namespace TraderForStalCraft
             dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
             dataGridViewTextBoxColumn2.ReadOnly = true;
             // 
-            // dataGridViewTextBoxColumn3
-            // 
-            dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
-            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -394,6 +390,7 @@ namespace TraderForStalCraft
             MinimizeBox = false;
             Name = "MainForm";
             Text = "Stalcraft Trader Bot";
+            TopMost = true;
             TabControll.ResumeLayout(false);
             MainPage.ResumeLayout(false);
             MainPage.PerformLayout();
@@ -427,7 +424,6 @@ namespace TraderForStalCraft
         private Label trackedItemsLabel;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
-        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
         private DataGridViewTextBoxColumn Column1;
         private DataGridViewTextBoxColumn Column2;
         private DataGridViewTextBoxColumn Column3;
