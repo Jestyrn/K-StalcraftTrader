@@ -38,9 +38,6 @@ namespace TraderForStalCraft.Scripts
         [DllImport("user32.dll")]
         private static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, IntPtr dwExtraInfo);
 
-        [DllImport("user32.dll")]
-        private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
-
         private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
         private const uint MOUSEEVENTF_LEFTUP = 0x0004;
         private const uint MOUSEEVENTF_MOVE = 0x0001;
@@ -140,6 +137,8 @@ namespace TraderForStalCraft.Scripts
                         List<int> lotPrices = new List<int>();
                         List<int> buyPrices = new List<int>();
 
+
+                        // обработка исключений
                         lotPrices.AddRange(GetLotPrices(text));
                         buyPrices.AddRange(GetBuyPrices(text));
 
@@ -189,19 +188,8 @@ namespace TraderForStalCraft.Scripts
             }
         }
 
-        private void MouseClick(int x, int y)
-        {
-            var simulator = new WindowsInput.InputSimulator();
 
-            // Двигаем мышь
-            Cursor.Position = new Point(x, y);
-            Thread.Sleep(50);
-
-            // Имитируем человеческий клик
-            simulator.Mouse.LeftButtonDown();
-            Thread.Sleep(new Random().Next(80, 250));
-            simulator.Mouse.LeftButtonUp();
-        }
+        // Интегрировать задержку
         private void MoveMouseSmoothly(int targetX, int targetY, int steps = 20)
         {
             var rand = new Random();
@@ -213,15 +201,16 @@ namespace TraderForStalCraft.Scripts
                 int newX = current.X + (int)((targetX - current.X) * ratio);
                 int newY = current.Y + (int)((targetY - current.Y) * ratio);
 
-                // Добавляем случайность для естественности
                 newX += rand.Next(-2, 3);
                 newY += rand.Next(-2, 3);
 
-                SetCursorPos(newX, newY);
+                Cursor.Position = new Point((int)newX, (int)newY);
                 Thread.Sleep(rand.Next(5, 15));
             }
 
-            mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, targetX, targetY, 0, IntPtr.Zero);
+            mouse_event(MOUSEEVENTF_LEFTDOWN, targetX, targetY, 0, IntPtr.Zero);
+            Thread.Sleep(100);
+            mouse_event(MOUSEEVENTF_LEFTUP, targetX, targetY, 0, IntPtr.Zero);
         }
 
         private List<int> GetLotPrices(string text)
