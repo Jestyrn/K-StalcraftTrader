@@ -219,22 +219,21 @@ namespace TraderForStalCraft
             // inputScrol
             // 
             inputScrol.Location = new Point(154, 277);
-            inputScrol.Maximum = new decimal(new int[] { 5000, 0, 0, 0 });
-            inputScrol.Minimum = new decimal(new int[] { 1000, 0, 0, 0 });
             inputScrol.Name = "inputScrol";
             inputScrol.Size = new Size(54, 23);
             inputScrol.TabIndex = 11;
-            inputScrol.Value = new decimal(new int[] { 5000, 0, 0, 0 });
+            inputScrol.Value = new decimal(new int[] { 100, 0, 0, 0 });
             inputScrol.ValueChanged += inputScrol_ValueChanged;
             // 
             // scrolDelay
             // 
             scrolDelay.Location = new Point(154, 239);
-            scrolDelay.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            scrolDelay.Maximum = new decimal(new int[] { 500, 0, 0, 0 });
+            scrolDelay.Minimum = new decimal(new int[] { 10, 0, 0, 0 });
             scrolDelay.Name = "scrolDelay";
             scrolDelay.Size = new Size(54, 23);
             scrolDelay.TabIndex = 11;
-            scrolDelay.Value = new decimal(new int[] { 500, 0, 0, 0 });
+            scrolDelay.Value = new decimal(new int[] { 10, 0, 0, 0 });
             scrolDelay.ValueChanged += scrolDelay_ValueChanged;
             // 
             // dragDropPanel
@@ -296,9 +295,9 @@ namespace TraderForStalCraft
             label3.AutoSize = true;
             label3.Location = new Point(12, 285);
             label3.Name = "label3";
-            label3.Size = new Size(119, 15);
+            label3.Size = new Size(120, 15);
             label3.TabIndex = 4;
-            label3.Text = "Скорость ввода (мс)";
+            label3.Text = "Задержка ввода (мс)";
             // 
             // label2
             // 

@@ -196,7 +196,7 @@ namespace TraderForStalCraft
             inputScrol.Value = returned.Speed;
         }
 
-        private async void startButton_Click(object sender, EventArgs e)
+        private void startButton_Click(object sender, EventArgs e)
         {
             startButton.Enabled = false;
             stopButton.Enabled = true;
