@@ -84,7 +84,6 @@ namespace TraderForStalCraft.Scripts
                     CvInvoke.Init();
                     Bitmap neededArea;
                     Bitmap screen = MakeScreenshot();
-                    int stepCount = 0;
 
                     Point? auctionButtonCoordinateats = FindMatch(screen, TakeTemplate(@"\auctionRecognition.png"));
                     if (auctionButtonCoordinateats != null)
@@ -95,139 +94,47 @@ namespace TraderForStalCraft.Scripts
                     for (int i = 0; i < data.Count; i++)
                     {
                         screen = MakeScreenshot();
-                        Point? xy = FindMatch(screen, TakeTemplate(@"\step.png"), min: true);
-                        // подсчет step
 
                         currentItem = currentItemList[i];
                         currentPrice = currentPriceList[i];
 
                         // Сериализация координат (hold - не помогает)
-                        Point? searchFieldCoordinates = FindMatch(screen, TakeTemplate(@"\searchField.png"), hold: 0.6);
+                        Point? searchFieldCoordinates = FindMatch(screen, TakeTemplate(@"\searchField.png"), hold: 0.6); // координаты поля поиска
+                        Point? searchButtonCoordinates = FindMatch(screen, TakeTemplate(@"\searchRecognition.png")); // координаты кнопки поиска
+                        MoveMouseSmoothly(searchButtonCoordinates.Value.X, searchButtonCoordinates.Value.Y); // сброс поиска (нажать на кнопку поиска)
+                        MoveMouseSmoothly(searchFieldCoordinates.Value.X, searchFieldCoordinates.Value.Y); // Нажатие на поле поиска
+                        InputSearchText(currentItem); // ввод названия предмета
+                        MoveMouseSmoothly(searchButtonCoordinates.Value.X, searchButtonCoordinates.Value.Y); // нажать на кнопку поиска
+                        Point? othersortingCoordinates = FindMatch(screen, TakeTemplate(@"\amountRecognition.png")); // фильтр до сброса (пока не работает)
+                        Point? buyOutCoordinates = FindMatch(screen, TakeTemplate(@"\buyoutRecognition.png")); // координаты кнопки поиска по выкупу
 
-                        Point? searchButtonCoordinates = FindMatch(screen, TakeTemplate(@"\searchRecognition.png"));
-                        MoveMouseSmoothly(searchButtonCoordinates.Value.X, searchButtonCoordinates.Value.Y);
-
-                        MoveMouseSmoothly(searchFieldCoordinates.Value.X, searchFieldCoordinates.Value.Y);
-                        screen = MakeScreenshot();
-                        InputSearchText(currentItem);
-
-                        MoveMouseSmoothly(searchButtonCoordinates.Value.X, searchButtonCoordinates.Value.Y);
-                        
-                        Point? othersortingCoordinates = FindMatch(screen, TakeTemplate(@"\amountRecognition.png"));
-                        Point? buyOutCoordinates = FindMatch(screen, TakeTemplate(@"\buyoutRecognition.png"));
-
-                        // отредактировать расстояние по иксу для othersortingCoordinates (другой фильтр)
+                        // отредактировать расстояние по иксу для othersortingCoordinates (другой фильтр), сброс фильтра
                         MoveMouseSmoothly(othersortingCoordinates.Value.X, othersortingCoordinates.Value.Y);
                         MoveMouseSmoothly(buyOutCoordinates.Value.X, buyOutCoordinates.Value.Y);
                         MoveMouseSmoothly(buyOutCoordinates.Value.X, buyOutCoordinates.Value.Y);
 
-                        // Логирование 
-
+                        // Поиск координат для определения страниц
                         Point? minPage = FindMatch(screen, TakeTemplate(@"\1pageRecognition.png"), min: true);
                         Point? maxPage = FindMatch(screen, TakeTemplate(@"\1pageRecognition.png"), max: true);
-
                         int wight = maxPage.Value.X - minPage.Value.Y;
                         int heist = maxPage.Value.Y - minPage.Value.Y;
 
+                        // вычисление количества страниц
                         screen = MakeScreenshotByCoordinates(minPage.Value.X, searchButtonCoordinates.Value.X, minPage.Value.Y + heist, maxPage.Value.Y+10 + heist+10);
-
                         pages = FindMaxPages(screen);
 
                         screen = MakeScreenshot();
 
-                        Point? firstPageCoordinates = FindMatch(screen, TakeTemplate(@"\1pageRecognition.png"));
-                        Point? leftSideCoordinates = FindMatch(screen, TakeTemplate(@"\leftSide.png"));
-                        Point? scrollBarCoordinates = FindMatch(screen, TakeTemplate(@"\scrollRecognition.png"));
+                        // Шаблон тесеракта
+                        //using (TesseractEngine tesseract = new TesseractEngine(Directory.GetCurrentDirectory() + @"\Data\traindata", "rus", EngineMode.LstmOnly))
+                        //{
+                        //    tesseract.SetVariable("tessedit_char_whitelist", "0123456789");
+                        //    tesseract.SetVariable("tessedit_pageseg_mode", "7");
 
-                        neededArea = MakeScreenshotByCoordinates(leftSideCoordinates.Value.X+10, scrollBarCoordinates.Value.X, buyOutCoordinates.Value.Y-20, firstPageCoordinates.Value.Y-20);
+                        //    var temp = tesseract.Process(ConvertBitmapToPixFast(neededArea));
+                        //    text = temp.GetText();
+                        //}
 
-                        // проверить логгирование
-                        neededArea.Save(loggerPath + @"\picture.png", System.Drawing.Imaging.ImageFormat.Png);
-
-                        using (TesseractEngine tesseract = new TesseractEngine(Directory.GetCurrentDirectory() + @"\Data\traindata", "rus", EngineMode.LstmOnly))
-                        {
-                            tesseract.SetVariable("tessedit_char_whitelist", "0123456789");
-                            tesseract.SetVariable("tessedit_pageseg_mode", "7");
-
-                            var temp = tesseract.Process(ConvertBitmapToPixFast(neededArea));
-                            text = temp.GetText();
-                        }
-
-                        // тестирование
-
-                        neededArea = MakeScreenshotByCoordinates(xy.Value.X, xy.Value.X + 100, xy.Value.Y - 10, firstPageCoordinates.Value.Y + 100);
-
-                        neededArea.Save(loggerPath + @"\picture1.png", System.Drawing.Imaging.ImageFormat.Png);
-
-                        using (TesseractEngine tesseract = new TesseractEngine(Directory.GetCurrentDirectory() + @"\Data\traindata", "rus", EngineMode.LstmOnly))
-                        {
-                            tesseract.SetVariable("tessedit_char_whitelist", "0123456789");
-                            tesseract.SetVariable("tessedit_pageseg_mode", "7");
-
-                            var temp = tesseract.Process(ConvertBitmapToPixFast(neededArea));
-                            text = temp.GetText();
-                        }
-
-                        List<int> lotPrices = new List<int>();
-                        List<int> buyPrices = new List<int>();
-
-                        // обработка исключений
-                        // Просмотреть все возможные сценарии
-                        // 1. Количество предметов
-                        // 2. Правильность обработки
-                        // 3. Если вариант выкупа "---"
-
-                        lotPrices.AddRange(GetIntPrice(text, false));
-                        buyPrices.AddRange(GetIntPrice(text, true));
-
-                        screen.Dispose();
-                        screen = MakeScreenshot();
-                        
-                        for (int j = 0; j < lotPrices.Count; j++)
-                        {
-                            if (lotPrices[j] < currentPrice)
-                            {
-                                // Делаем ставку
-                            }
-                        }
-
-                        if (buyPrices.Count == 10)
-                        {
-                            for (int j = 0; j < buyPrices.Count; j++)
-                            {
-                                if (buyPrices[j] < currentPrice)
-                                {
-                                    // Покупаем
-                                }
-                            }
-                        }
-
-                        // условие просмотр - Скролл \ Некст Пейдж
-
-                        // Вариант 1
-                        // 6 скролов - 1 группа, 5 групп - 1стр
-                        // Получить страницы, и сделать цикл поиска по страницам - pages
-
-                        // Вариант 2
-                        // получить положение скоролл бара
-                        // Получить полжение стрелики вниз
-                        // листать пока стрелка.у сильно меньше чем скроллбар.у
-
-                        // Вариант 3 
-                        // Получить количество страниц
-                        // получить посчитать текущую страницу
-                        // Если стр 1 или мы на последней - шаманить с "длина скрол бара" - разные размеры скролл баров - разное кол-во скролов
-                        // Иначе "Скрол" - который ниже
-
-                        // Скрол
-                        /* 1. Навестись на ползунок
-                         * 2. Нажать ЛКМ
-                         * 3. Опустить мышь
-                         * 4. ОТпустить Лкм
-                         * 5. Повтрор
-                         */
-
-                        // null exception
                         MoveMouseSmoothly(searchFieldCoordinates.Value.X, searchFieldCoordinates.Value.Y);
                         ClearSearchField();
 
@@ -240,12 +147,6 @@ namespace TraderForStalCraft.Scripts
                 MessageBox.Show("Игра не запущена");
                 return;
             }
-        }
-
-        private List<int> GetIntPrice(object text, bool isPrice = true)
-        {
-            List<int> price = new List<int>();
-            return price;
         }
 
         private int FindMaxPages(Bitmap screen)
@@ -414,7 +315,6 @@ namespace TraderForStalCraft.Scripts
             input.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.BACK);
         }
 
-
         // Интегрировать задержку.
         private void InputSearchText(string currentItem)
         {
@@ -428,7 +328,6 @@ namespace TraderForStalCraft.Scripts
                 Thread.Sleep(random.Next(0, 10));
             }
         }
-
 
         // Интегрировать задержку
         private void MoveMouseSmoothly(int targetX, int targetY, int steps = 20)
