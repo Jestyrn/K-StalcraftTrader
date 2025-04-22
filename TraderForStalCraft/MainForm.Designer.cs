@@ -390,7 +390,6 @@ namespace TraderForStalCraft
             MinimizeBox = false;
             Name = "MainForm";
             Text = "Stalcraft Trader Bot";
-            TopMost = true;
             TabControll.ResumeLayout(false);
             MainPage.ResumeLayout(false);
             MainPage.PerformLayout();
