@@ -2,6 +2,12 @@
 using System.Text.Json;
 using OfficeOpenXml;
 using TraderForStalCraft.Scripts;
+using System.IO;
+using LicenseContext = OfficeOpenXml.LicenseContext;
+using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
+using System.Globalization;
 
 namespace TraderForStalCraft
 {
@@ -108,7 +114,41 @@ namespace TraderForStalCraft
                             });
                         }
                         break;
+
+                    case ".xls":
+                    case ".xlsx":
+                        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                        {
+                            IWorkbook workbook;
+
+                            // Определяем формат файла
+                            if (extencion.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
+                            {
+                                workbook = new XSSFWorkbook(fs); // Для .xlsx
+                            }
+                            else
+                            {
+                                workbook = new HSSFWorkbook(fs); // Для .xls
+                            }
+
+                            var sheet = workbook.GetSheetAt(0); // Первый лист
+
+                            for (int row = 1; row <= sheet.LastRowNum; row++) // Начинаем с 1 (пропускаем заголовок)
+                            {
+                                var currentRow = sheet.GetRow(row);
+                                if (currentRow == null) continue;
+
+                                products.Add(new Product
+                                {
+                                    Name = GetCellValue(currentRow.GetCell(0)), // Колонка A
+                                    Price = GetCellValue(currentRow.GetCell(1))  // Колонка B
+                                });
+                            }
+                        }
+                        break;
+
                     default:
+                        MessageBox.Show($"Формат файла {extencion} не поддерживается");
                         break;
                 }
             }
@@ -122,6 +162,19 @@ namespace TraderForStalCraft
             {
                 trackedItemsDataGridView.Rows.Add(products[i].Name, products[i].Price);
             }
+        }
+
+        private string GetCellValue(ICell cell)
+        {
+            if (cell == null) return string.Empty;
+
+            return cell.CellType switch
+            {
+                CellType.String => cell.StringCellValue.Trim(),
+                CellType.Numeric => cell.NumericCellValue.ToString(CultureInfo.InvariantCulture),
+                CellType.Boolean => cell.BooleanCellValue.ToString(),
+                _ => cell.ToString().Trim()
+            };
         }
 
         private void SaveDataButton_Click(object sender, EventArgs e)

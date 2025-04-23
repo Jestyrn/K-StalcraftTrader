@@ -15,9 +15,11 @@
     <None Remove="Data\Blueprints\auctionRecognition.png" />
     <None Remove="Data\Blueprints\balanceRecognition.png" />
     <None Remove="Data\Blueprints\betRecognition.png" />
+    <None Remove="Data\Blueprints\buyout.png" />
     <None Remove="Data\Blueprints\buyoutRecognition.png" />
     <None Remove="Data\Blueprints\buyRecognition.png" />
     <None Remove="Data\Blueprints\confirmRecognition.png" />
+    <None Remove="Data\Blueprints\falseOkButton.png" />
     <None Remove="Data\Blueprints\leftSide.png" />
     <None Remove="Data\Blueprints\page10.png" />
     <None Remove="Data\Blueprints\page11.png" />
@@ -47,6 +49,7 @@
     <PackageReference Include="EPPlus" Version="8.0.2" />
     <PackageReference Include="InputSimulator" Version="1.0.4" />
     <PackageReference Include="MiNET" Version="1.0.2304" />
+    <PackageReference Include="NPOI" Version="2.7.3" />
     <PackageReference Include="Tesseract" Version="5.2.0" />
   </ItemGroup>
 
@@ -70,6 +73,9 @@
     <EmbeddedResource Include="Data\Blueprints\betRecognition.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\buyout.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\buyoutRecognition.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -77,6 +83,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\confirmRecognition.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\falseOkButton.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\leftSide.png">

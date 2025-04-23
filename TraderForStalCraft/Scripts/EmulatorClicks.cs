@@ -49,23 +49,13 @@ namespace TraderForStalCraft.Scripts
         {
             if (random == null)
             {
-                Point current = Cursor.Position;
-                for (int i = 1; i <= steps; i++)
-                {
-                    double ratio = (double)i / steps;
-                    int newX = current.X + (int)((targetX - current.X) * ratio);
-                    int newY = current.Y + (int)((targetY - current.Y) * ratio);
-
-                    newX += 1;
-                    newY += 1;
-
-                    Cursor.Position = new Point((int)newX, (int)newY);
-                    Thread.Sleep(5);
-                }
+                Cursor.Position = new Point(targetX, targetY);
+                Thread.Sleep(50);
 
                 mouse_event(MOUSEEVENTF_LEFTDOWN, targetX, targetY, 0, IntPtr.Zero);
                 Thread.Sleep(300);
                 mouse_event(MOUSEEVENTF_LEFTUP, targetX, targetY, 0, IntPtr.Zero);
+                Thread.Sleep(50);
 
                 return;
             }
@@ -86,7 +76,7 @@ namespace TraderForStalCraft.Scripts
                 }
 
                 mouse_event(MOUSEEVENTF_LEFTDOWN, targetX, targetY, 0, IntPtr.Zero);
-                Thread.Sleep(random.Next(200, 300));
+                Thread.Sleep(random.Next(150, 170));
                 mouse_event(MOUSEEVENTF_LEFTUP, targetX, targetY, 0, IntPtr.Zero);
 
                 return;
