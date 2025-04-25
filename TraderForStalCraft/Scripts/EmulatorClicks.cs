@@ -11,6 +11,7 @@ namespace TraderForStalCraft.Scripts
     internal class EmulatorClicks
     {
         private Random random;
+
         private int delayM;
         private int delayK;
 

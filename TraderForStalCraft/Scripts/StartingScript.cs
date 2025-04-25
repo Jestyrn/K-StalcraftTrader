@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -15,28 +16,8 @@ namespace TraderForStalCraft.Scripts
 {
     internal class StartingScript
     {
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
-
-        [DllImport("user32.dll")]
-        private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern bool ClientToScreen(IntPtr hWnd, ref Point lpPoint);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-
-        [DllImport("user32.dll")]
-        private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-
-        [DllImport("user32.dll")]
-        private static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, IntPtr dwExtraInfo);
-
-        private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
-        private const uint MOUSEEVENTF_LEFTUP = 0x0004;
-
+        public bool firstStart = true;
+        private Dictionary<string, Rectangle> matches;
         private static bool _isStarted;
         private decimal delay;
         private decimal inputSpeed;
@@ -67,7 +48,6 @@ namespace TraderForStalCraft.Scripts
 
         private void StartingBuying()
         {
-            bool firstStart = true;
             if(Process.GetProcessesByName("stalcraft").Length > 0)
             {
                 string text;
@@ -82,10 +62,10 @@ namespace TraderForStalCraft.Scripts
 
                 if ((delay == 0 || delay == null) & (inputSpeed == 0 || inputSpeed == null))
                     checker = true;
-                
 
                 ScreenDoings screenDoings = new ScreenDoings();
                 EmulatorClicks emulator = new EmulatorClicks(delay, inputSpeed, checker);
+                matches = new Dictionary<string, Rectangle>();
 
                 while (_isStarted)
                 {
@@ -94,68 +74,128 @@ namespace TraderForStalCraft.Scripts
 
                     if (firstStart)
                     {
-                        MessageBox.Show("Убедитесь что поле поиска пустое.");
+                        FirstStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList);
                     }
-
-                    Point? auctionButtonCoordinateats = FindMatch(screen, TakeTemplate(@"\auctionRecognition.png"));
-                    if (auctionButtonCoordinateats != null)
+                    else
                     {
-                        emulator.MoveMouseSmoothly(auctionButtonCoordinateats.Value.X, auctionButtonCoordinateats.Value.Y);
+                        NextStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList);
                     }
 
-                    for (int i = 0; i < data.Count; i++)
-                    {
-                        screen = screenDoings.Screenshot();
+                    // Интегрировать в FirstStart и NextStart
+                    //for (int i = 0; i < data.Count; i++)
+                    //{
+                    //    ScriptSearch(screen, screenDoings, emulator, currentItemList[i], currentPriceList[i]);
+                    //}
 
-                        Thread.Sleep(100);
-
-                        currentItem = currentItemList[i];
-                        currentPrice = currentPriceList[i];
-
-                        // Сериализация координат (hold - не помогает)
-                        Point? searchButtonCoordinates = FindMatch(screen, TakeTemplate(@"\searchRecognition.png")); // координаты кнопки поиска
-                        Point? searchFieldCoordinates = FindMatch(screen, TakeTemplate(@"\searchField.png")); // координаты поля поиска
-
-                        if (searchFieldCoordinates == null)
-                        {
-                            searchFieldCoordinates = new Point(searchButtonCoordinates.Value.X - 70, searchButtonCoordinates.Value.Y);
-                        }
-
-                        screen = screenDoings.Screenshot();
-
-                        emulator.MoveMouseSmoothly(searchFieldCoordinates.Value.X, searchFieldCoordinates.Value.Y); // Нажатие на поле поиска
-                        emulator.InputSearchText(currentItem); // ввод названия предмета
-                        emulator.MoveMouseSmoothly(searchButtonCoordinates.Value.X, searchButtonCoordinates.Value.Y); // нажать на кнопку поиска
-                        Point? othersortingCoordinates = FindMatch(screen, TakeTemplate(@"\amountRecognition.png")); // фильтр до сброса (пока не работает)
-                        Point? buyOutCoordinates = FindMatch(screen, TakeTemplate(@"\buyoutRecognition.png")); // координаты кнопки поиска по выкупу
-
-
-                        // отредактировать расстояние по иксу для othersortingCoordinates (другой фильтр), сброс фильтра
-                        emulator.MoveMouseSmoothly(othersortingCoordinates.Value.X, othersortingCoordinates.Value.Y);
-                        emulator.MoveMouseSmoothly(buyOutCoordinates.Value.X, buyOutCoordinates.Value.Y);
-                        emulator.MoveMouseSmoothly(buyOutCoordinates.Value.X, buyOutCoordinates.Value.Y);
-
-                        screen = screenDoings.Screenshot();
-                        SearchItems(screen, currentPrice);
-
-                        emulator.MoveMouseSmoothly(searchFieldCoordinates.Value.X, searchFieldCoordinates.Value.Y); // Нажатие на поле поиска
-                        emulator.ClearSearchField();
-                        emulator.MoveMouseSmoothly(searchButtonCoordinates.Value.X, searchButtonCoordinates.Value.Y); // сброс поиска (нажать на кнопку поиска)
-
-                        firstStart = false;
-                        screen.Dispose();
-                    }
-
-                    if (_isStarted)
-                    {
-                        MessageBox.Show("Цикл завершен");
-                    }
+                    return;
                 }
             }
             else
             {
                 MessageBox.Show("Игра не запущена");
                 return;
+            }
+        }
+
+        private void ScriptSearch(Bitmap screen, ScreenDoings screenDoings, EmulatorClicks emulator, string currentItem, int currentPrice)
+        {
+            screen = screenDoings.Screenshot();
+
+            matches = screenDoings.GetAllPoints();
+
+            /* Цикл поиска взятый из FirstStart NextStart           */
+            /*                                                      */
+            /* Сериализаци (создать новый класс + для MainForm.cs)  */
+            /*                                                      */
+            /* 1. Найти кнопку поиска                               */
+            /* 2. Открыть сохраненные координаты                    */
+            /*      - Достаем все координаты                        */
+            /*      - Ищем координаты сами                          */
+            /*                                                      */
+            /* Нажать на поле поиска                                */
+            /* Ввести текст                                         */
+            /* Нажать на кнопку поиска                              */
+            /*                                                      */
+            /* Анализ - Посмотреть стак, учет стака,                */
+            /* 1. Посмотреть стак                                   */
+            /* 2. Посмотреть стоимость                              */
+            /* (Если есть стак, посчитать стоимость лота)           */
+            /* (Сравнить стоимость -> покупаем/непокупаем)          */
+            /*                                                      */
+            /* Состояние поиска:                                    */
+            /* 1. Сделать скролл                                    */
+            /* 2. Некст пейдж                                       */
+            /*                                                      */
+            /* Если все сошлось - покупать                          */
+            /*                                                      */
+            /* Выгрузить сериализацию                               */
+            /*                                                      */
+            /* Нажать на поле поиска и стереть текст                */
+
+            // кнопка аукциона
+            //Point? auctionButtonCoordinateats = FindMatch(screen, TakeTemplate(@"\auctionRecognition.png"));
+            //if (auctionButtonCoordinateats != null)
+            //{
+            //    emulator.MoveMouseSmoothly(auctionButtonCoordinateats.Value.X, auctionButtonCoordinateats.Value.Y);
+            //}
+
+            // Сериализация координат (hold - не помогает)
+            Point? searchButtonCoordinates = FindMatch(screen, screenDoings.Templates[@"\searchRecognition.png"]); // координаты кнопки поиска
+            Point? searchFieldCoordinates = FindMatch(screen, TakeTemplate(@"\searchField.png")); // координаты поля поиска
+
+            if (searchFieldCoordinates == null)
+            {
+                searchFieldCoordinates = new Point(searchButtonCoordinates.Value.X - 70, searchButtonCoordinates.Value.Y);
+            }
+
+            screen = screenDoings.Screenshot();
+
+            emulator.MoveMouseSmoothly(searchFieldCoordinates.Value.X, searchFieldCoordinates.Value.Y); // Нажатие на поле поиска
+            emulator.InputSearchText(currentItem); // ввод названия предмета
+            emulator.MoveMouseSmoothly(searchButtonCoordinates.Value.X, searchButtonCoordinates.Value.Y); // нажать на кнопку поиска
+            Point? othersortingCoordinates = FindMatch(screen, TakeTemplate(@"\amountRecognition.png")); // фильтр до сброса (пока не работает)
+            Point? buyOutCoordinates = FindMatch(screen, TakeTemplate(@"\buyoutRecognition.png")); // координаты кнопки поиска по выкупу
+
+
+            // отредактировать расстояние по иксу для othersortingCoordinates (другой фильтр), сброс фильтра
+            emulator.MoveMouseSmoothly(othersortingCoordinates.Value.X, othersortingCoordinates.Value.Y);
+            emulator.MoveMouseSmoothly(buyOutCoordinates.Value.X, buyOutCoordinates.Value.Y);
+            emulator.MoveMouseSmoothly(buyOutCoordinates.Value.X, buyOutCoordinates.Value.Y);
+
+            screen = screenDoings.Screenshot();
+            SearchItems(screen, currentPrice);
+
+            emulator.MoveMouseSmoothly(searchFieldCoordinates.Value.X, searchFieldCoordinates.Value.Y); // Нажатие на поле поиска
+            emulator.ClearSearchField();
+            emulator.MoveMouseSmoothly(searchButtonCoordinates.Value.X, searchButtonCoordinates.Value.Y); // сброс поиска (нажать на кнопку поиска)
+
+            screen.Dispose();
+        }
+
+        private void FirstStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice)
+        {
+            matches = sc.GetAllPoints();
+
+            // Нажать кнопку аукциона (если есть)
+            // Нажать кнопку поиск (для фокуса)
+            // Нажать на другой фильтр (для сброса фильтра)
+            // Настроить фильтр (х2 на выкуп)
+
+            firstStart = false;
+
+            foreach (var item in listPrice)
+            {
+                ScriptSearch(screen, sc, emulator, listItems[item], item);
+            }
+        }
+
+        private void NextStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice) 
+        {
+            matches = sc.GetAllPoints();
+
+            foreach (var item in listPrice)
+            {
+                ScriptSearch(screen, sc, emulator, listItems[item], item);
             }
         }
 
@@ -243,6 +283,7 @@ namespace TraderForStalCraft.Scripts
                 }
             }
         }
+
         private Bitmap CropImage(Bitmap source, Rectangle rect)
         {
             return source.Clone(rect, source.PixelFormat);

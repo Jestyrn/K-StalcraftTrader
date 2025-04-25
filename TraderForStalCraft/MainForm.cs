@@ -8,6 +8,7 @@ using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System.Globalization;
+using System.Diagnostics;
 
 namespace TraderForStalCraft
 {
@@ -15,12 +16,13 @@ namespace TraderForStalCraft
     {
         private string mind = "";
         private StartingScript script;
+        private int step;
+        private Thread task;
 
         public MainForm()
         {
             string pathToSerilize = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
             string pathToRandomize = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
-
 
             InitializeComponent();
 
@@ -31,7 +33,6 @@ namespace TraderForStalCraft
             if (File.Exists(pathToRandomize))
                 LoadFromJsonRandomize(pathToRandomize);
         }
-
 
         private void dragDropInfoLabel_DragEnter(object sender, DragEventArgs e)
         {
@@ -257,10 +258,10 @@ namespace TraderForStalCraft
             Dictionary<string, int> data = new Dictionary<string, int>();
             for (int i = 0; i < trackedItemsDataGridView.Rows.Count; i++)
             {
-                data.Add(trackedItemsDataGridView[0,i].Value.ToString(), Convert.ToInt32(trackedItemsDataGridView[1,i].Value));
+                data.Add(trackedItemsDataGridView[0, i].Value.ToString(), Convert.ToInt32(trackedItemsDataGridView[1, i].Value));
             }
 
-            Thread task = new Thread(() =>
+            task = new Thread(() =>
             {
                 script.Start(data);
             });
@@ -273,6 +274,7 @@ namespace TraderForStalCraft
             stopButton.Enabled = false;
             startButton.Enabled = true;
             script.Stop();
+            task.Abort();
         }
 
         private void scrolDelay_ValueChanged(object sender, EventArgs e)
