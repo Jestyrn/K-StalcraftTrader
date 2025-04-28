@@ -54,10 +54,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\Serialize\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Include="Data\Blueprints\1pageRecognition.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>

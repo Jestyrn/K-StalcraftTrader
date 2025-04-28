@@ -7,8 +7,10 @@ using System.Windows.Forms;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
+using NPOI.SS.Formula.Functions;
 using Org.BouncyCastle.Math;
 using Tesseract;
+using TraderForStalCraft.Data.Serialize;
 using WindowsInput;
 using ImageFormat = System.Drawing.Imaging.ImageFormat;
 
@@ -23,6 +25,9 @@ namespace TraderForStalCraft.Scripts
         private decimal inputSpeed;
         private Dictionary<string, int> data;
         private Random random;
+        private string path = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\PointsSer.json";
+        Serialize serialize;
+        private bool matchesFromSerialize;
 
         string loggerPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
@@ -48,17 +53,17 @@ namespace TraderForStalCraft.Scripts
 
         private void StartingBuying()
         {
-            if(Process.GetProcessesByName("stalcraft").Length > 0)
+            if (Process.GetProcessesByName("stalcraft").Length > 0)
             {
-                string text;
-
                 List<string> currentItemList = new List<string>(data.Keys);
                 List<int> currentPriceList = new List<int>(data.Values);
 
+                Rectangle searchButton;
+
                 string currentItem;
                 int currentPrice;
-                int pages;
                 bool checker = false;
+                serialize = new Serialize(path);
 
                 if ((delay == 0 || delay == null) & (inputSpeed == 0 || inputSpeed == null))
                     checker = true;
@@ -71,23 +76,18 @@ namespace TraderForStalCraft.Scripts
                 {
                     CvInvoke.Init();
                     Bitmap screen = screenDoings.Screenshot();
+                    searchButton = screenDoings.GetSearchButton(screen);
+
+                    matchesFromSerialize = false;
 
                     if (firstStart)
                     {
-                        FirstStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList);
+                        FirstStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList, searchButton);
                     }
                     else
                     {
-                        NextStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList);
+                        NextStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList, searchButton);
                     }
-
-                    // Интегрировать в FirstStart и NextStart
-                    //for (int i = 0; i < data.Count; i++)
-                    //{
-                    //    ScriptSearch(screen, screenDoings, emulator, currentItemList[i], currentPriceList[i]);
-                    //}
-
-                    return;
                 }
             }
             else
@@ -99,289 +99,255 @@ namespace TraderForStalCraft.Scripts
 
         private void ScriptSearch(Bitmap screen, ScreenDoings screenDoings, EmulatorClicks emulator, string currentItem, int currentPrice)
         {
+            screen = screenDoings.Screenshot(); // скриншот
+
+            // а если нет сериализации и в поле что-то есть?
+            // а если есть сериализация и в поле что-то есть?
+
+            /* Нажать на поле поиска                                    */
+            emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width / 2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height / 2));
+
+            /* Ввести текст                                             */
+            emulator.InputSearchText(currentItem);
+
+            /* Нажать на кнопку поиска                                  */
+            emulator.MoveMouseSmoothly(matches[@"\searchRecognition.png"].X + (matches[@"\searchRecognition.png"].Width / 2), matches[@"\searchRecognition.png"].Y + (matches[@"\searchRecognition.png"].Height / 2));
+
+            /* Обновить скриншот (посмотреть на нужные лоты)            */
             screen = screenDoings.Screenshot();
 
-            matches = screenDoings.GetAllPoints();
-
-            /* Цикл поиска взятый из FirstStart NextStart           */
-            /*                                                      */
-            /* Сериализаци (создать новый класс + для MainForm.cs)  */
-            /*                                                      */
-            /* 1. Найти кнопку поиска                               */
-            /* 2. Открыть сохраненные координаты                    */
-            /*      - Достаем все координаты                        */
-            /*      - Ищем координаты сами                          */
-            /*                                                      */
-            /* Нажать на поле поиска                                */
-            /* Ввести текст                                         */
-            /* Нажать на кнопку поиска                              */
-            /*                                                      */
-            /* Анализ - Посмотреть стак, учет стака,                */
-            /* 1. Посмотреть стак                                   */
-            /* 2. Посмотреть стоимость                              */
-            /* (Если есть стак, посчитать стоимость лота)           */
-            /* (Сравнить стоимость -> покупаем/непокупаем)          */
-            /*                                                      */
-            /* Состояние поиска:                                    */
-            /* 1. Сделать скролл                                    */
-            /* 2. Некст пейдж                                       */
-            /*                                                      */
-            /* Если все сошлось - покупать                          */
-            /*                                                      */
-            /* Выгрузить сериализацию                               */
-            /*                                                      */
-            /* Нажать на поле поиска и стереть текст                */
-
-            // кнопка аукциона
-            //Point? auctionButtonCoordinateats = FindMatch(screen, TakeTemplate(@"\auctionRecognition.png"));
-            //if (auctionButtonCoordinateats != null)
-            //{
-            //    emulator.MoveMouseSmoothly(auctionButtonCoordinateats.Value.X, auctionButtonCoordinateats.Value.Y);
-            //}
-
-            // Сериализация координат (hold - не помогает)
-            Point? searchButtonCoordinates = FindMatch(screen, screenDoings.Templates[@"\searchRecognition.png"]); // координаты кнопки поиска
-            Point? searchFieldCoordinates = FindMatch(screen, TakeTemplate(@"\searchField.png")); // координаты поля поиска
-
-            if (searchFieldCoordinates == null)
-            {
-                searchFieldCoordinates = new Point(searchButtonCoordinates.Value.X - 70, searchButtonCoordinates.Value.Y);
-            }
-
-            screen = screenDoings.Screenshot();
-
-            emulator.MoveMouseSmoothly(searchFieldCoordinates.Value.X, searchFieldCoordinates.Value.Y); // Нажатие на поле поиска
-            emulator.InputSearchText(currentItem); // ввод названия предмета
-            emulator.MoveMouseSmoothly(searchButtonCoordinates.Value.X, searchButtonCoordinates.Value.Y); // нажать на кнопку поиска
-            Point? othersortingCoordinates = FindMatch(screen, TakeTemplate(@"\amountRecognition.png")); // фильтр до сброса (пока не работает)
-            Point? buyOutCoordinates = FindMatch(screen, TakeTemplate(@"\buyoutRecognition.png")); // координаты кнопки поиска по выкупу
-
-
-            // отредактировать расстояние по иксу для othersortingCoordinates (другой фильтр), сброс фильтра
-            emulator.MoveMouseSmoothly(othersortingCoordinates.Value.X, othersortingCoordinates.Value.Y);
-            emulator.MoveMouseSmoothly(buyOutCoordinates.Value.X, buyOutCoordinates.Value.Y);
-            emulator.MoveMouseSmoothly(buyOutCoordinates.Value.X, buyOutCoordinates.Value.Y);
-
-            screen = screenDoings.Screenshot();
-            SearchItems(screen, currentPrice);
-
-            emulator.MoveMouseSmoothly(searchFieldCoordinates.Value.X, searchFieldCoordinates.Value.Y); // Нажатие на поле поиска
+            // FindAndBuyLots(screen, emulator, screenDoings, currentPrice);
+            BuyLots(screen, emulator, screenDoings, currentPrice);
+            emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width/2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height/2));
             emulator.ClearSearchField();
-            emulator.MoveMouseSmoothly(searchButtonCoordinates.Value.X, searchButtonCoordinates.Value.Y); // сброс поиска (нажать на кнопку поиска)
+            emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width/2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height/2));
+
+            /* Подробности по покупке                                   */
+            /* 1. Найти стоимость лота                                  */
+            /* 2. Найти стак (если есть)                                */
+            /* 3. Посчитать (стоимость / стак(если не найден, то = 1))  */
+            /* 4. Сравниваем стоимость (найденная < нужной)             */
+            /* -да: Покупаем, обносить фильтр, поиск по новой           */
+            /* -нет: Даем три попытки на поиск(если исчерпано - скип)   */
+
+
+            // Скрин стака - рабочий
+            // int stakX;
+            // Bitmap testAnalys = screenDoings.Screenshot(matches[@"\amountRecognition.png"].X - (matches[@"\amountRecognition.png"].Width / 6), matches[@"\amountRecognition.png"].Y + (matches[@"\amountRecognition.png"].Width / 6), matches[@"\amountRecognition.png"].Width / 4, matches[@"\amountRecognition.png"].Height * 2, true);
+
+            /* Анализ - Посмотреть стак, учет стака,                     */
+            /* 1. Посмотреть стак                                        */
+            /* 2. Посмотреть стоимость                                   */
+            /* (Если есть стак, посчитать стоимость лота)                */
+            /* (Сравнить стоимость -> покупаем/непокупаем)               */
+            /*                                                           */
+            /* Если все сошлось - покупать                               */
+            /*                                                           */
+            /* Обновить фильтр (x2 по "цена выкупа")                     */
+            /*                                                           */
+            /* Выгрузить сериализацию                                    */
+            /*                                                           */
+            /* Нажать на поле поиска и стереть текст                     */
+
+            serialize.SaveData(path, matches);
 
             screen.Dispose();
         }
 
-        private void FirstStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice)
+        private void BuyLots(Bitmap screen, EmulatorClicks emulator, ScreenDoings sc, int neededPrice)
         {
-            matches = sc.GetAllPoints();
-
-            // Нажать кнопку аукциона (если есть)
-            // Нажать кнопку поиск (для фокуса)
-            // Нажать на другой фильтр (для сброса фильтра)
-            // Настроить фильтр (х2 на выкуп)
-
-            firstStart = false;
-
-            foreach (var item in listPrice)
-            {
-                ScriptSearch(screen, sc, emulator, listItems[item], item);
-            }
-        }
-
-        private void NextStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice) 
-        {
-            matches = sc.GetAllPoints();
-
-            foreach (var item in listPrice)
-            {
-                ScriptSearch(screen, sc, emulator, listItems[item], item);
-            }
-        }
-
-        private void SearchItems(Bitmap screen, int needPrice)
-        {
-            ScreenDoings sc = new ScreenDoings();
-            EmulatorClicks emulate = new EmulatorClicks();
-
             int RowHeight = 37;
             int PriceAreaWidth = 130;
             int PriceAreaHeight = 37;
+            string textOCR;
 
-            string text;
+            int priceX = matches[@"\buyoutRecognition.png"].X - 35;
+            int priceY = matches[@"\buyoutRecognition.png"].Y + 25;
+            // Определить стак
+            //int amountX = amountPos.Value.X + 10;
 
-            var amountTemplate = new Bitmap(TakeTemplate(@"\amountRecognition.png"));
-            var priceTemplate = new Bitmap(TakeTemplate(@"\buyoutRecognition.png"));
-            var okButton = new Bitmap(TakeTemplate(@"\falseOkButton.png"));
-            var confirmButton = new Bitmap(TakeTemplate(@"\buyout.png"));
-
-            var amountPos = FindMatch(screen, amountTemplate, min: true);
-            var pricePos = FindMatch(screen, priceTemplate, min: true);
-            Point? okButtonPos;
-            Point? confirmPos;
-
-            //if (amountPos == null || pricePos == null)
-            //return;
-
-            int priceX = pricePos.Value.X + 60;
-            int priceY = pricePos.Value.Y + 40;
-            int amountX = amountPos.Value.X + 10;
+            int count = 0;
 
             for (int i = 0; i < 9; i++)
             {
-                var priceRect = new Rectangle(
-                    priceX,
-                    priceY + (RowHeight * i),
-                    PriceAreaWidth,
-                    PriceAreaHeight);
-
-                using (var priceImage = CropImage(screen, priceRect))
+                if (count > 2)
                 {
+                    return;
+                }
 
+                var priceRect = new Rectangle(
+                priceX,
+                priceY + (RowHeight * i),
+                PriceAreaWidth,
+                PriceAreaHeight);
 
+                using (Bitmap priceImg = new Bitmap(sc.CropImage(screen, priceRect)))
+                {
+                    priceImg.Save(loggerPath + @$"\ssas{i}.png", ImageFormat.Png);
                     using (TesseractEngine tesseract = new TesseractEngine(Directory.GetCurrentDirectory() + @"\Data\traindata", "rus", EngineMode.LstmOnly))
                     {
                         tesseract.SetVariable("tessedit_char_whitelist", "0123456789");
                         tesseract.SetVariable("tessedit_pageseg_mode", "7");
 
-                        var temp = tesseract.Process(sc.ConvertBitmapToPixFast(priceImage));
-                        text = temp.GetText();
+                        var temp = tesseract.Process(sc.ConvertBitmapToPixFast(priceImg));
+                        textOCR = temp.GetText();
                     }
 
-                    string filteredPrice = new string(text.Where(char.IsDigit).ToArray());
+                    string filteredPrice = new string(textOCR.Where(char.IsDigit).ToArray());
+                    
+                    // если "" - то скролл/переход на некст страницу
 
                     if (string.IsNullOrEmpty(filteredPrice))
+                    {
                         continue;
+                    }
 
                     if (int.TryParse(filteredPrice, out int price))
                     {
-
-                        if (price <= needPrice)
+                        if (price <= neededPrice)
                         {
-                            emulate.MoveMouseSmoothly(priceX, priceY + (RowHeight* i) + 5);
-
-                            Thread.Sleep(500);
-
-                            screen = sc.Screenshot();
-                            confirmPos = FindMatch(screen, confirmButton);
-
-                            Thread.Sleep(100);
-                            emulate.MoveMouseSmoothly(confirmPos.Value.X, confirmPos.Value.Y);
-
-                            screen = sc.Screenshot();
-                            Thread.Sleep(100);
-                            okButtonPos = FindMatch(screen, okButton);
-
-                            if (okButtonPos != null)
+                            if (matchesFromSerialize)
                             {
-                                emulate.MoveMouseSmoothly(okButtonPos.Value.X, okButtonPos.Value.Y);
+                                // нажать на стоимость null 
+                                if (matches[@"\buyout.png"].X == 0)
+                                {
+                                    sc.Screenshot();
+                                    Thread.Sleep(500);
+                                    matches[@"\buyout.png"] = sc.FindMatch(screen, sc.Templates[@"\buyout.png"]);
+                                }
+
+                                emulator.MoveMouseSmoothly(priceX, priceY + (RowHeight * i) + 5);
+                                
+                                // нажать на выкуп null
+                                if (matches[@"\confirmRecognition.png"].X == 0)
+                                {
+                                    sc.Screenshot();
+                                    Thread.Sleep(500);
+                                    matches[@"\confirmRecognition.png"] = sc.FindMatch(screen, sc.Templates[@"\confirmRecognition.png"]);
+                                }
+
+                                emulator.MoveMouseSmoothly(matches[@"\buyout.png"].X + (matches[@"\buyout.png"].Width / 2), matches[@"\buyout.png"].Y + (matches[@"\buyout.png"].Height / 2));
+
+                                // подтвердить null
+                                if (matches[@"\falseOkButton.png"].X == 0)
+                                {
+                                    sc.Screenshot();
+                                    Thread.Sleep(500);
+                                    matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
+                                }
+
+                                emulator.MoveMouseSmoothly(matches[@"\confirmRecognition.png"].X + (matches[@"\confirmRecognition.png"].Width / 2), matches[@"\confirmRecognition.png"].Y + (matches[@"\confirmRecognition.png"].Height / 2));
+                                
+                                // скрин (чтобы понять, появился ли "ОК") null
+                                sc.Screenshot();
+                                Thread.Sleep(500);
+                                
+                                // если появилось "ОК" - нажать
+                                matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
+                                if (matches[@"\falseOkButton.png"].X != 0)
+                                {
+                                    emulator.MoveMouseSmoothly(matches[@"\falseOkButton.png"].X + (matches[@"\falseOkButton.png"].Width / 2), matches[@"\falseOkButton.png"].Y + (matches[@"\falseOkButton.png"].Height / 2));
+                                }
+                            }
+                            else
+                            {
+                                // нажать на стоимость
+                                emulator.MoveMouseSmoothly(priceX, priceY + (RowHeight * i) + 5);
+                                // скрин
                                 Thread.Sleep(500);
                                 screen = sc.Screenshot();
+                                // записать позицию "выкупить"
+                                matches[@"\buyout.png"] = sc.FindMatch(screen, sc.Templates[@"\buyout.png"]);
+                                // нажать выкупить
+                                emulator.MoveMouseSmoothly(matches[@"\buyout.png"].X + (matches[@"\buyout.png"].Width/2), matches[@"\buyout.png"].Y + (matches[@"\buyout.png"].Height/2));
+                                // скрин
+                                screen = sc.Screenshot();
+                                // записать позицию "подтвердить"
+                                matches[@"\confirmRecognition.png"] = sc.FindMatch(screen, sc.Templates[@"\confirmRecognition.png"]);
+                                // нажать подтвердить
+                                emulator.MoveMouseSmoothly(matches[@"\confirmRecognition.png"].X + (matches[@"\confirmRecognition.png"].Width/2), matches[@"\confirmRecognition.png"].Y + (matches[@"\confirmRecognition.png"].Height/2));
+                                // скрин
+                                screen = sc.Screenshot();
+                                // если появилось "ОК"
+                                if (sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]).X != 0)
+                                {
+                                    // нажать ОК
+                                    matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
+                                    emulator.MoveMouseSmoothly(matches[@"\falseOkButton.png"].X + (matches[@"\falseOkButton.png"].Width/2), matches[@"\falseOkButton.png"].Y + (matches[@"\falseOkButton.png"].Height/2));
+                                    continue;
+                                }
                             }
+
+                            i = 0;
+
+                            emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
+                            emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
+                            continue;
+                        }
+                        else
+                        {
+                            count++;
                         }
                     }
                 }
             }
         }
 
-        private Bitmap CropImage(Bitmap source, Rectangle rect)
+        private void FirstStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice, Rectangle searchButton)
         {
-            return source.Clone(rect, source.PixelFormat);
-        }
+            Rectangle? rectSer = serialize.LoadData()?["\\searchRecognition.png"];
+            Rectangle rectMat = sc.GetSearchButton(screen);
 
-        private Point? FindMatch(Bitmap Screen, Bitmap templateImage, double hold = 0.78, int needMatch = 0, bool min = false, bool max = false, bool center = true)
-        {
-            using (Image<Bgr, byte> source = ConvertToNeedImage(Screen))
-            using (Image<Bgr, byte> template = ConvertToNeedImage(templateImage))
+            if (rectSer != null)
             {
-                using (Image<Gray, float> result = source.MatchTemplate(template, TemplateMatchingType.CcoeffNormed))
+                if ((rectSer.Value.X == rectMat.X) & (rectSer.Value.Y == rectMat.Y))
                 {
-                    double[] minValues, maxValues;
-                    Point[] minLocation, maxLocation;
-                    result.MinMax(out minValues, out maxValues, out minLocation, out maxLocation);
-
-                    if (maxValues[needMatch] > hold)
-                    {
-                        if (min || max)
-                        {
-                            center = false;
-                        }
-
-                        if (center)
-                        {
-                            return new Point(
-                                maxLocation[0].X + template.Width / 2,
-                                maxLocation[0].Y + template.Height / 2);
-                        }
-
-                        if (max)
-                        {
-                            return new Point(
-                                maxLocation[0].X,
-                                maxLocation[0].Y);
-                        }
-
-                        if (min)
-                        {
-                            return new Point(
-                                maxLocation[0].X - template.Width,
-                                maxLocation[0].Y - template.Height);
-                        }
-                    }
+                    matches = serialize.LoadData();
+                    matchesFromSerialize = true;
+                }
+                else
+                {
+                    matches = sc.GetAllPoints(screen);
+                    matchesFromSerialize = false;
                 }
             }
-            return null;
+            else if (matches.Count != 0)
+            {
+                matches = sc.GetAllPoints(screen);
+                matchesFromSerialize = false;
+            }
+
+            FirstStartReady(emulator);
+
+            firstStart = false;
+
+            for (int i = 0; i < listPrice.Count; i++)
+            {
+                ScriptSearch(screen, sc, emulator, listItems[i], listPrice[i]);
+            }
         }
 
-        private Bitmap TakeTemplate(string templatePath)
+        private void FirstStartReady(EmulatorClicks emulator)
         {
-            string templatesFolder = Directory.GetCurrentDirectory() + @"\Data\Blueprints";
-            Bitmap template = new Bitmap(Image.FromFile(templatesFolder + templatePath));
-            return template;
+            var rectangle = matches["\\auctionRecognition.png"];
+            if (rectangle.X != 0)
+            {
+                emulator.MoveMouseSmoothly(rectangle.X, rectangle.Y);
+            }
+            emulator.MoveMouseSmoothly(matches[@"\searchRecognition.png"].X + (matches[@"\searchRecognition.png"].Width / 2), matches[@"\searchRecognition.png"].Y + (matches[@"\searchRecognition.png"].Height / 2));
+            emulator.MoveMouseSmoothly(matches[@"\betRecognition.png"].X + (matches[@"\betRecognition.png"].Width / 2), matches[@"\betRecognition.png"].Y + (matches[@"\betRecognition.png"].Height / 2));
+            emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
+            emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
         }
 
-        private Image<Bgr, byte> ConvertToNeedImage(Bitmap bitmap)
+        private void NextStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice, Rectangle searchButton)
         {
-            // Если формат не 24bppRgb, создаем копию с правильным форматом
-            if (bitmap.PixelFormat != PixelFormat.Format24bppRgb)
-            {
-                var converted = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format24bppRgb);
-                using (var g = Graphics.FromImage(converted))
-                {
-                    g.DrawImage(bitmap, 0, 0);
-                }
-                bitmap = converted;
-            }
+            matchesFromSerialize = true;
 
-            Image<Bgr, byte> result = new Image<Bgr, byte>(bitmap.Width, bitmap.Height);
-            BitmapData data = bitmap.LockBits(
-                new Rectangle(0, 0, bitmap.Width, bitmap.Height),
-                ImageLockMode.ReadOnly,
-                PixelFormat.Format24bppRgb);
-
-            try
+            for (int i = 0; i < listPrice.Count; i++)
             {
-                byte[] buffer = new byte[data.Stride * bitmap.Height];
-                Marshal.Copy(data.Scan0, buffer, 0, buffer.Length);
-
-                for (int y = 0; y < bitmap.Height; y++)
-                {
-                    int rowOffset = y * data.Stride;
-                    for (int x = 0; x < bitmap.Width; x++)
-                    {
-                        int pixelOffset = rowOffset + x * 3;
-                        byte b = buffer[pixelOffset];
-                        byte g = buffer[pixelOffset + 1];
-                        byte r = buffer[pixelOffset + 2];
-                        result[y, x] = new Bgr(r, g, b);
-                    }
-                }
+                ScriptSearch(screen, sc, emulator, listItems[i], listPrice[i]);
             }
-            finally
-            {
-                bitmap.UnlockBits(data);
-            }
-            return result;
         }
     }
 }
