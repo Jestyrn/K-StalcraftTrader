@@ -72,6 +72,10 @@ namespace TraderForStalCraft.Scripts
                 EmulatorClicks emulator = new EmulatorClicks(delay, inputSpeed, checker);
                 matches = new Dictionary<string, Rectangle>();
 
+                // найти кнопку аукциона
+                // нажать
+                // скрин
+
                 while (_isStarted)
                 {
                     CvInvoke.Init();
@@ -99,6 +103,8 @@ namespace TraderForStalCraft.Scripts
 
         private void ScriptSearch(Bitmap screen, ScreenDoings screenDoings, EmulatorClicks emulator, string currentItem, int currentPrice)
         {
+            // Переработать систему поиска
+
             screen = screenDoings.Screenshot(); // скриншот
 
             // а если нет сериализации и в поле что-то есть?
@@ -208,45 +214,34 @@ namespace TraderForStalCraft.Scripts
                         {
                             if (matchesFromSerialize)
                             {
-                                // нажать на стоимость null 
-                                if (matches[@"\buyout.png"].X == 0)
-                                {
-                                    sc.Screenshot();
-                                    Thread.Sleep(500);
-                                    matches[@"\buyout.png"] = sc.FindMatch(screen, sc.Templates[@"\buyout.png"]);
-                                }
+                                Rectangle Buy = new Rectangle();
+                                Rectangle OK = new Rectangle();
+                                Rectangle Confirm = new Rectangle();
 
+                                // нажать на стоимость null
                                 emulator.MoveMouseSmoothly(priceX, priceY + (RowHeight * i) + 5);
                                 
                                 // нажать на выкуп null
-                                if (matches[@"\confirmRecognition.png"].X == 0)
-                                {
-                                    sc.Screenshot();
-                                    Thread.Sleep(500);
-                                    matches[@"\confirmRecognition.png"] = sc.FindMatch(screen, sc.Templates[@"\confirmRecognition.png"]);
-                                }
+                                emulator.MoveMouseSmoothly(priceX+80, priceY + (RowHeight * i) + 40);
 
-                                emulator.MoveMouseSmoothly(matches[@"\buyout.png"].X + (matches[@"\buyout.png"].Width / 2), matches[@"\buyout.png"].Y + (matches[@"\buyout.png"].Height / 2));
-
-                                // подтвердить null
-                                if (matches[@"\falseOkButton.png"].X == 0)
-                                {
-                                    sc.Screenshot();
-                                    Thread.Sleep(500);
-                                    matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
-                                }
-
-                                emulator.MoveMouseSmoothly(matches[@"\confirmRecognition.png"].X + (matches[@"\confirmRecognition.png"].Width / 2), matches[@"\confirmRecognition.png"].Y + (matches[@"\confirmRecognition.png"].Height / 2));
-                                
-                                // скрин (чтобы понять, появился ли "ОК") null
-                                sc.Screenshot();
+                                // ок null
+                                screen = sc.Screenshot();
                                 Thread.Sleep(500);
-                                
-                                // если появилось "ОК" - нажать
-                                matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
-                                if (matches[@"\falseOkButton.png"].X != 0)
+                                OK = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
+                                if ((OK.X != 0) & (OK.Y != 0))
                                 {
-                                    emulator.MoveMouseSmoothly(matches[@"\falseOkButton.png"].X + (matches[@"\falseOkButton.png"].Width / 2), matches[@"\falseOkButton.png"].Y + (matches[@"\falseOkButton.png"].Height / 2));
+                                    matches[@"\falseOkButton.png"] = OK;
+                                    emulator.MoveMouseSmoothly(OK.X + (OK.Width / 2), OK.Y + (OK.Height / 2));
+                                    count = 3;
+                                    continue;
+                                }
+
+                                screen = sc.Screenshot();
+                                Thread.Sleep(500);
+                                Confirm = sc.FindMatch(screen, sc.Templates[@"\confirmRecognition.png"]);
+                                if ((Confirm.X != 0) & (Confirm.Y != 0))
+                                {
+                                    emulator.MoveMouseSmoothly(Confirm.X + (Confirm.Width / 2), Confirm.Y + (Confirm.Height / 2));
                                 }
                             }
                             else
@@ -274,12 +269,20 @@ namespace TraderForStalCraft.Scripts
                                     // нажать ОК
                                     matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
                                     emulator.MoveMouseSmoothly(matches[@"\falseOkButton.png"].X + (matches[@"\falseOkButton.png"].Width/2), matches[@"\falseOkButton.png"].Y + (matches[@"\falseOkButton.png"].Height/2));
+                                    count = 3;
+                                    continue;
+                                }
+                                else if (sc.FindMatch(screen, sc.Templates[@"\confirmRecognition.png"]).X != 0)
+                                {
+                                    matches[@"\confirmRecognition.png"] = sc.FindMatch(screen, sc.Templates[@"\confirmRecognition.png"]);
+                                    emulator.MoveMouseSmoothly(matches[@"\confirmRecognition.png"].X + (matches[@"\confirmRecognition.png"].Width / 2), matches[@"\confirmRecognition.png"].Y + (matches[@"\confirmRecognition.png"].Height / 2));
                                     continue;
                                 }
                             }
 
                             i = 0;
 
+                            price = int.MaxValue;
                             emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
                             emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
                             continue;
@@ -311,13 +314,13 @@ namespace TraderForStalCraft.Scripts
                     matchesFromSerialize = false;
                 }
             }
-            else if (matches.Count != 0)
+            else if ((matches.Count != 0) | (rectSer == null))
             {
                 matches = sc.GetAllPoints(screen);
                 matchesFromSerialize = false;
             }
 
-            FirstStartReady(emulator);
+            FirstStartReady(emulator, sc);
 
             firstStart = false;
 
@@ -327,13 +330,23 @@ namespace TraderForStalCraft.Scripts
             }
         }
 
-        private void FirstStartReady(EmulatorClicks emulator)
+        private void FirstStartReady(EmulatorClicks emulator, ScreenDoings sc)
         {
-            var rectangle = matches["\\auctionRecognition.png"];
+            Rectangle rectangle;
+            try
+            {
+                rectangle = matches["\\auctionRecognition.png"];
+            }
+            catch (Exception)
+            {
+                rectangle = sc.FindMatch(sc.Screenshot(), sc.Templates["\\auctionRecognition.png"]);
+            }
+
             if (rectangle.X != 0)
             {
                 emulator.MoveMouseSmoothly(rectangle.X, rectangle.Y);
             }
+
             emulator.MoveMouseSmoothly(matches[@"\searchRecognition.png"].X + (matches[@"\searchRecognition.png"].Width / 2), matches[@"\searchRecognition.png"].Y + (matches[@"\searchRecognition.png"].Height / 2));
             emulator.MoveMouseSmoothly(matches[@"\betRecognition.png"].X + (matches[@"\betRecognition.png"].Width / 2), matches[@"\betRecognition.png"].Y + (matches[@"\betRecognition.png"].Height / 2));
             emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
@@ -343,6 +356,9 @@ namespace TraderForStalCraft.Scripts
         private void NextStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice, Rectangle searchButton)
         {
             matchesFromSerialize = true;
+
+            emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width / 2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height / 2));
+            emulator.ClearSearchField();
 
             for (int i = 0; i < listPrice.Count; i++)
             {

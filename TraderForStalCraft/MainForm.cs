@@ -274,7 +274,6 @@ namespace TraderForStalCraft
         {
             stopButton.Enabled = false;
             startButton.Enabled = true;
-            script.Stop();
             task.Abort();
         }
 
