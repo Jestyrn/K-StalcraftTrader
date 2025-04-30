@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
+using log4net.Repository.Hierarchy;
 using NPOI.SS.Formula.Functions;
 using Org.BouncyCastle.Math;
 using Tesseract;
@@ -39,6 +40,11 @@ namespace TraderForStalCraft.Scripts
             random = new Random();
         }
 
+        public StartingScript()
+        {
+
+        }
+
         public void Start(Dictionary<string, int> data)
         {
             this.data = new Dictionary<string, int>(data);
@@ -55,6 +61,7 @@ namespace TraderForStalCraft.Scripts
         {
             if (Process.GetProcessesByName("stalcraft").Length > 0)
             {
+                Logger("Запущен");
                 List<string> currentItemList = new List<string>(data.Keys);
                 List<int> currentPriceList = new List<int>(data.Values);
 
@@ -86,10 +93,12 @@ namespace TraderForStalCraft.Scripts
 
                     if (firstStart)
                     {
+                        Logger("Первый заход");
                         FirstStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList, searchButton);
                     }
                     else
                     {
+                        Logger("N заход");
                         NextStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList, searchButton);
                     }
                 }
@@ -103,6 +112,7 @@ namespace TraderForStalCraft.Scripts
 
         private void ScriptSearch(Bitmap screen, ScreenDoings screenDoings, EmulatorClicks emulator, string currentItem, int currentPrice)
         {
+            Logger("Основной скрипт поиска");
             // Переработать систему поиска
 
             screen = screenDoings.Screenshot(); // скриншот
@@ -123,11 +133,15 @@ namespace TraderForStalCraft.Scripts
             screen = screenDoings.Screenshot();
 
             // FindAndBuyLots(screen, emulator, screenDoings, currentPrice);
+
+            Logger("До покупки");
+
             BuyLots(screen, emulator, screenDoings, currentPrice);
             emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width/2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height/2));
             emulator.ClearSearchField();
             emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width/2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height/2));
 
+            Logger("После покупки");
             /* Подробности по покупке                                   */
             /* 1. Найти стоимость лота                                  */
             /* 2. Найти стак (если есть)                                */
@@ -158,10 +172,12 @@ namespace TraderForStalCraft.Scripts
             serialize.SaveData(path, matches);
 
             screen.Dispose();
+            Logger("Выход из скрипта");
         }
 
         private void BuyLots(Bitmap screen, EmulatorClicks emulator, ScreenDoings sc, int neededPrice)
         {
+            Logger("Заход в покупку");
             int RowHeight = 37;
             int PriceAreaWidth = 130;
             int PriceAreaHeight = 37;
@@ -200,8 +216,10 @@ namespace TraderForStalCraft.Scripts
                     }
 
                     string filteredPrice = new string(textOCR.Where(char.IsDigit).ToArray());
-                    
+
                     // если "" - то скролл/переход на некст страницу
+
+                    Logger($"Дошел до покупки {i}");
 
                     if (string.IsNullOrEmpty(filteredPrice))
                     {
@@ -298,6 +316,7 @@ namespace TraderForStalCraft.Scripts
 
         private void FirstStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice, Rectangle searchButton)
         {
+            Logger("Самое начало");
             Rectangle? rectSer = serialize.LoadData()?["\\searchRecognition.png"];
             Rectangle rectMat = sc.GetSearchButton(screen);
 
@@ -328,10 +347,12 @@ namespace TraderForStalCraft.Scripts
             {
                 ScriptSearch(screen, sc, emulator, listItems[i], listPrice[i]);
             }
+            Logger("Конец начала");
         }
 
         private void FirstStartReady(EmulatorClicks emulator, ScreenDoings sc)
         {
+            Logger("Подготовка");
             Rectangle rectangle;
             try
             {
@@ -351,10 +372,12 @@ namespace TraderForStalCraft.Scripts
             emulator.MoveMouseSmoothly(matches[@"\betRecognition.png"].X + (matches[@"\betRecognition.png"].Width / 2), matches[@"\betRecognition.png"].Y + (matches[@"\betRecognition.png"].Height / 2));
             emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
             emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
+            Logger("Конец подготовки");
         }
 
         private void NextStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice, Rectangle searchButton)
         {
+            Logger("В заходе");
             matchesFromSerialize = true;
 
             emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width / 2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height / 2));
@@ -363,6 +386,20 @@ namespace TraderForStalCraft.Scripts
             for (int i = 0; i < listPrice.Count; i++)
             {
                 ScriptSearch(screen, sc, emulator, listItems[i], listPrice[i]);
+            }
+            Logger("выход из захода");
+        }
+    
+        private void Logger(string text)
+        {
+            text = text + "\n";
+            string path = loggerPath + @"\logs.txt";
+            if (!File.Exists(path))
+                File.WriteAllText(path, text + "\n");
+            else
+            {
+                text += File.ReadAllText(path);
+                File.WriteAllText(path, text);
             }
         }
     }
