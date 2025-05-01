@@ -45,15 +45,17 @@ namespace TraderForStalCraft.Scripts
 
         }
 
-        public void Start(Dictionary<string, int> data)
+        public void Start(Dictionary<string, int> data, CancellationToken cts)
         {
             this.data = new Dictionary<string, int>(data);
             _isStarted = true;
+            Logger("Скрипт для закупки запущен");
             StartingBuying();
         }
 
         public void Stop()
         {
+            Logger("Попытка остановить скрипт");
             _isStarted = false;
         }
 
@@ -61,7 +63,7 @@ namespace TraderForStalCraft.Scripts
         {
             if (Process.GetProcessesByName("stalcraft").Length > 0)
             {
-                Logger("Запущен");
+                Logger("Игра запущена, проверка пройдена");
                 List<string> currentItemList = new List<string>(data.Keys);
                 List<int> currentPriceList = new List<int>(data.Values);
 
@@ -82,37 +84,63 @@ namespace TraderForStalCraft.Scripts
                 // найти кнопку аукциона
                 // нажать
                 // скрин
-
-                while (_isStarted)
+                Logger("Зафиксированны переменные связанные с задержкой");
+                try
                 {
-                    CvInvoke.Init();
-                    Bitmap screen = screenDoings.Screenshot();
-                    searchButton = screenDoings.GetSearchButton(screen);
-
-                    matchesFromSerialize = false;
-
-                    if (firstStart)
+                    int startCounter = 0;
+                    while (_isStarted)
                     {
-                        Logger("Первый заход");
-                        FirstStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList, searchButton);
+                        CvInvoke.Init();
+                        Bitmap screen = screenDoings.Screenshot();
+                        searchButton = screenDoings.GetSearchButton(screen);
+
+                        matchesFromSerialize = false;
+
+                        Logger("Применены настройки для устройств ввода (мышь и клавиатура)");
+
+                        if (firstStart)
+                        {
+                            Logger($"Изначальная проверка скрипта (проход {startCounter})");
+                            FirstStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList, searchButton);
+                        }
+                        else
+                        {
+                            Logger($"Последовательная проверка скрипта (проход {startCounter})");
+                            NextStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList, searchButton);
+                        }
+
+                        startCounter++;
                     }
-                    else
-                    {
-                        Logger("N заход");
-                        NextStart(screen, screenDoings, data.Count, emulator, currentItemList, currentPriceList, searchButton);
-                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    Logger("Вызвана остновка скрипта: Безопастно");
+                    MessageBox.Show("Script stopped gracefully");
+                }
+                catch (ThreadAbortException)
+                {
+                    Logger("Вызвана остановка скрипта: Вынужденно");
+                    Thread.ResetAbort();
+                    MessageBox.Show("Script was aborted");
+                    Logger("Скрипт пытается перезапустится");
+                }
+                catch (Exception ex)
+                {
+                    Logger($"Вызвана остановка скрипта: Инное принуждение, текст ошибки следующий{ex.Message}");
+                    MessageBox.Show($"Script error: {ex.Message}");
                 }
             }
             else
             {
                 MessageBox.Show("Игра не запущена");
+                Logger("ПРоверка на запуск игры не пройдена");
                 return;
             }
         }
 
         private void ScriptSearch(Bitmap screen, ScreenDoings screenDoings, EmulatorClicks emulator, string currentItem, int currentPrice)
         {
-            Logger("Основной скрипт поиска");
+            Logger("Запуск главного скрипта по поиску (SearchScript)");
             // Переработать систему поиска
 
             screen = screenDoings.Screenshot(); // скриншот
@@ -132,16 +160,14 @@ namespace TraderForStalCraft.Scripts
             /* Обновить скриншот (посмотреть на нужные лоты)            */
             screen = screenDoings.Screenshot();
 
+            Logger("Поготовка к покупке завершена");
+
             // FindAndBuyLots(screen, emulator, screenDoings, currentPrice);
-
-            Logger("До покупки");
-
             BuyLots(screen, emulator, screenDoings, currentPrice);
             emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width/2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height/2));
             emulator.ClearSearchField();
             emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width/2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height/2));
 
-            Logger("После покупки");
             /* Подробности по покупке                                   */
             /* 1. Найти стоимость лота                                  */
             /* 2. Найти стак (если есть)                                */
@@ -149,11 +175,6 @@ namespace TraderForStalCraft.Scripts
             /* 4. Сравниваем стоимость (найденная < нужной)             */
             /* -да: Покупаем, обносить фильтр, поиск по новой           */
             /* -нет: Даем три попытки на поиск(если исчерпано - скип)   */
-
-
-            // Скрин стака - рабочий
-            // int stakX;
-            // Bitmap testAnalys = screenDoings.Screenshot(matches[@"\amountRecognition.png"].X - (matches[@"\amountRecognition.png"].Width / 6), matches[@"\amountRecognition.png"].Y + (matches[@"\amountRecognition.png"].Width / 6), matches[@"\amountRecognition.png"].Width / 4, matches[@"\amountRecognition.png"].Height * 2, true);
 
             /* Анализ - Посмотреть стак, учет стака,                     */
             /* 1. Посмотреть стак                                        */
@@ -170,71 +191,120 @@ namespace TraderForStalCraft.Scripts
             /* Нажать на поле поиска и стереть текст                     */
 
             serialize.SaveData(path, matches);
+            Logger("Выполнена сериализация точек поиска");
 
             screen.Dispose();
-            Logger("Выход из скрипта");
         }
 
         private void BuyLots(Bitmap screen, EmulatorClicks emulator, ScreenDoings sc, int neededPrice)
         {
-            Logger("Заход в покупку");
+            Logger("Вызван метод поиска товаров (поиск нужных точек на экране)");
             int RowHeight = 37;
             int PriceAreaWidth = 130;
             int PriceAreaHeight = 37;
-            string textOCR;
+            int stakX;
+            string priceOCR;
+            string amountOCR;
+
+            int amountX = matches[@"\amountRecognition.png"].X - (matches[@"\amountRecognition.png"].Width / 6);
+            int amountY = matches[@"\amountRecognition.png"].Y + (matches[@"\amountRecognition.png"].Width / 7);
+            int amountWigh = matches[@"\amountRecognition.png"].Width / 2;
+            int amountHeight = matches[@"\amountRecognition.png"].Height * 2;
 
             int priceX = matches[@"\buyoutRecognition.png"].X - 35;
             int priceY = matches[@"\buyoutRecognition.png"].Y + 25;
-            // Определить стак
-            //int amountX = amountPos.Value.X + 10;
-
             int count = 0;
-
+            Logger("Поиск точек для покупки завершен");
             for (int i = 0; i < 9; i++)
             {
+                Logger($"Цикл поиска лотов, ткущий лот {i}");
                 if (count > 2)
                 {
                     return;
                 }
 
-                var priceRect = new Rectangle(
+                screen = sc.Screenshot();
+
+                Rectangle amountRect = new Rectangle(
+                    amountX,
+                    amountY + (RowHeight * i),
+                    amountWigh,
+                    amountHeight
+                    );
+
+
+                Rectangle priceRect = new Rectangle(
                 priceX,
                 priceY + (RowHeight * i),
                 PriceAreaWidth,
                 PriceAreaHeight);
 
+                Logger("Определение области поиска координат");
+
+                // Протестировать работу "количества предметов".
                 using (Bitmap priceImg = new Bitmap(sc.CropImage(screen, priceRect)))
+                using (Bitmap amountImg = new Bitmap(sc.CropImage(screen, amountRect)))
                 {
-                    priceImg.Save(loggerPath + @$"\ssas{i}.png", ImageFormat.Png);
                     using (TesseractEngine tesseract = new TesseractEngine(Directory.GetCurrentDirectory() + @"\Data\traindata", "rus", EngineMode.LstmOnly))
                     {
                         tesseract.SetVariable("tessedit_char_whitelist", "0123456789");
                         tesseract.SetVariable("tessedit_pageseg_mode", "7");
 
                         var temp = tesseract.Process(sc.ConvertBitmapToPixFast(priceImg));
-                        textOCR = temp.GetText();
+                        priceOCR = temp.GetText();
                     }
 
-                    string filteredPrice = new string(textOCR.Where(char.IsDigit).ToArray());
+                    Logger($"Стоимость лота {i} - определена как:{priceOCR}");
 
-                    // если "" - то скролл/переход на некст страницу
-
-                    Logger($"Дошел до покупки {i}");
+                    string filteredPrice = new string(priceOCR.Where(char.IsDigit).ToArray());
 
                     if (string.IsNullOrEmpty(filteredPrice))
                     {
+                        Logger("Стоимость определена не коректно, переход к следующему лоту");
                         continue;
                     }
 
+                    // Скролл нужен для просмотра стаков. (также как и некст пейдж)
+
+                    using (TesseractEngine tesseract = new TesseractEngine(Directory.GetCurrentDirectory() + @"\Data\traindata", "rus", EngineMode.LstmOnly))
+                    {
+                        tesseract.SetVariable("tessedit_char_whitelist", "0123456789");
+                        tesseract.SetVariable("tessedit_pageseg_mode", "7");
+
+                        var temp = tesseract.Process(sc.ConvertBitmapToPixFast(amountImg));
+                        amountOCR = temp.GetText();
+                    }
+
+
+                    Logger($"количество лота {i} - определена как:{amountOCR}");
+
+                    int amount;
+
+                    string amountFiltred = new string(amountOCR.Where(char.IsDigit).ToArray());
+                    if (string.IsNullOrEmpty(amountFiltred))
+                    {
+                        amount = 1;
+                    }
+                    else
+                    {
+                        if (int.TryParse(amountFiltred, out amount))
+                        {
+
+                        }
+                    }
+
+
                     if (int.TryParse(filteredPrice, out int price))
                     {
+                        Logger($"Итоговые данные для лота стоимость:{price}, количество{amount}, стоимость за 1 ед {price / amount}");
+                        price = price / amount;
                         if (price <= neededPrice)
                         {
                             if (matchesFromSerialize)
                             {
+                                Logger("Покупка лота с учетом сериализации");
                                 Rectangle Buy = new Rectangle();
                                 Rectangle OK = new Rectangle();
-                                Rectangle Confirm = new Rectangle();
 
                                 // нажать на стоимость null
                                 emulator.MoveMouseSmoothly(priceX, priceY + (RowHeight * i) + 5);
@@ -250,20 +320,12 @@ namespace TraderForStalCraft.Scripts
                                 {
                                     matches[@"\falseOkButton.png"] = OK;
                                     emulator.MoveMouseSmoothly(OK.X + (OK.Width / 2), OK.Y + (OK.Height / 2));
-                                    count = 3;
-                                    continue;
                                 }
-
-                                screen = sc.Screenshot();
-                                Thread.Sleep(500);
-                                Confirm = sc.FindMatch(screen, sc.Templates[@"\confirmRecognition.png"]);
-                                if ((Confirm.X != 0) & (Confirm.Y != 0))
-                                {
-                                    emulator.MoveMouseSmoothly(Confirm.X + (Confirm.Width / 2), Confirm.Y + (Confirm.Height / 2));
-                                }
+                                Logger("лот куплен / не хватило средств");
                             }
                             else
                             {
+                                Logger("Покупка лота без сериализации");
                                 // нажать на стоимость
                                 emulator.MoveMouseSmoothly(priceX, priceY + (RowHeight * i) + 5);
                                 // скрин
@@ -296,6 +358,7 @@ namespace TraderForStalCraft.Scripts
                                     emulator.MoveMouseSmoothly(matches[@"\confirmRecognition.png"].X + (matches[@"\confirmRecognition.png"].Width / 2), matches[@"\confirmRecognition.png"].Y + (matches[@"\confirmRecognition.png"].Height / 2));
                                     continue;
                                 }
+                                Logger("Лот куплен / не хватило средств");
                             }
 
                             i = 0;
@@ -303,11 +366,13 @@ namespace TraderForStalCraft.Scripts
                             price = int.MaxValue;
                             emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
                             emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
-                            continue;
+
+                            Logger("Сброс сортировки для поиска следующего лота (по стоимости, без учета количества)");
                         }
                         else
                         {
                             count++;
+                            Logger($"Стоимость оказалась больше чем нужно (осталось попыток на поиск выгодног лота {count}/3) ");
                         }
                     }
                 }
@@ -316,21 +381,26 @@ namespace TraderForStalCraft.Scripts
 
         private void FirstStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice, Rectangle searchButton)
         {
-            Logger("Самое начало");
+            Logger("Вход в \"Первый старт\"");
             Rectangle? rectSer = serialize.LoadData()?["\\searchRecognition.png"];
             Rectangle rectMat = sc.GetSearchButton(screen);
 
+            Logger("Поиск наличия сериализации");
             if (rectSer != null)
             {
                 if ((rectSer.Value.X == rectMat.X) & (rectSer.Value.Y == rectMat.Y))
                 {
+                    Logger("Сериализация найдена");
                     matches = serialize.LoadData();
                     matchesFromSerialize = true;
+                    Logger("Сериализация загружена");
                 }
                 else
                 {
+                    Logger("Начало поиска данных для сериализации");
                     matches = sc.GetAllPoints(screen);
                     matchesFromSerialize = false;
+                    Logger("Поиск точек для сериализации завершен");
                 }
             }
             else if ((matches.Count != 0) | (rectSer == null))
@@ -347,12 +417,11 @@ namespace TraderForStalCraft.Scripts
             {
                 ScriptSearch(screen, sc, emulator, listItems[i], listPrice[i]);
             }
-            Logger("Конец начала");
         }
 
         private void FirstStartReady(EmulatorClicks emulator, ScreenDoings sc)
         {
-            Logger("Подготовка");
+            Logger("Подготовка ");
             Rectangle rectangle;
             try
             {
@@ -372,12 +441,10 @@ namespace TraderForStalCraft.Scripts
             emulator.MoveMouseSmoothly(matches[@"\betRecognition.png"].X + (matches[@"\betRecognition.png"].Width / 2), matches[@"\betRecognition.png"].Y + (matches[@"\betRecognition.png"].Height / 2));
             emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
             emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
-            Logger("Конец подготовки");
         }
 
         private void NextStart(Bitmap screen, ScreenDoings sc, int count, EmulatorClicks emulator, List<string> listItems, List<int> listPrice, Rectangle searchButton)
         {
-            Logger("В заходе");
             matchesFromSerialize = true;
 
             emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width / 2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height / 2));
@@ -387,18 +454,22 @@ namespace TraderForStalCraft.Scripts
             {
                 ScriptSearch(screen, sc, emulator, listItems[i], listPrice[i]);
             }
-            Logger("выход из захода");
         }
-    
+
         private void Logger(string text)
         {
-            text = text + "\n";
-            string path = loggerPath + @"\logs.txt";
+            string logFullPath = Directory.GetCurrentDirectory() + @$"\Logs";
+            if (!Directory.Exists(logFullPath))
+                Directory.CreateDirectory(Directory.GetCurrentDirectory() + @$"\Logs");
+
+            text = $"[{DateTime.Now.ToString("HH:mm:ss")}] - {text} \n";
+
+            string path = loggerPath + @$"{DateTime.Now.ToString("dd.MM.yy")}.txt";
             if (!File.Exists(path))
-                File.WriteAllText(path, text + "\n");
+                File.WriteAllText(path, text);
             else
             {
-                text += File.ReadAllText(path);
+                text = File.ReadAllText(path) + text;
                 File.WriteAllText(path, text);
             }
         }

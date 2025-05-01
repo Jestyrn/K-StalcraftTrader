@@ -10,6 +10,7 @@ using NPOI.XSSF.UserModel;
 using System.Globalization;
 using System.Diagnostics;
 using TraderForStalCraft.Data.Serialize;
+using NPOI.SS.Formula.Functions;
 
 namespace TraderForStalCraft
 {
@@ -19,6 +20,7 @@ namespace TraderForStalCraft
         private StartingScript script;
         private int step;
         private Thread task;
+        private CancellationTokenSource _cts;
 
         public MainForm()
         {
@@ -262,11 +264,14 @@ namespace TraderForStalCraft
                 data.Add(trackedItemsDataGridView[0, i].Value.ToString(), Convert.ToInt32(trackedItemsDataGridView[1, i].Value));
             }
 
+            _cts = new CancellationTokenSource();
+
             task = new Thread(() =>
             {
-                script.Start(data);
+                script.Start(data, _cts.Token); // Передаем токен отмены в скрипт
             });
 
+            task.IsBackground = true;
             task.Start();
         }
 
@@ -274,7 +279,24 @@ namespace TraderForStalCraft
         {
             stopButton.Enabled = false;
             startButton.Enabled = true;
-            task.Abort();
+            if (_cts != null)
+            {
+                _cts.Cancel(); // Посылаем сигнал отмены
+
+                // Даем скрипту время на корректное завершение
+                if (task != null && task.IsAlive)
+                {
+                    bool stopped = task.Join(500); // Ждем до 500мс
+                    if (!stopped)
+                    {
+                        task.Abort(); // Только в крайнем случае!
+                        Console.WriteLine("Script was forcibly stopped");
+                    }
+                }
+
+                _cts.Dispose();
+                _cts = null;
+            }
         }
 
         private void scrolDelay_ValueChanged(object sender, EventArgs e)
