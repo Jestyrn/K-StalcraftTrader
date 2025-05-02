@@ -11,6 +11,7 @@ using Emgu.CV.Structure;
 using Emgu.CV;
 using Tesseract;
 using System.Runtime.InteropServices;
+using System.Security.Permissions;
 
 namespace TraderForStalCraft.Scripts
 {
@@ -23,35 +24,38 @@ namespace TraderForStalCraft.Scripts
         public Dictionary<string, Rectangle> Points;
         private string[] Files;
 
-        /*  0   \1pageRecognition.png   */
-        /*  1   \amountRecognition.png  */
-        /*  2   \auctionRecognition.png */
-        /*  3   \balanceRecognition.png */
-        /*  4   \betRecognition.png     */
-        /*  5   \buyout.png             */
-        /*  6   \buyoutRecognition.png  */
-        /*  7   \buyRecognition.png     */
-        /*  8   \confirmRecognition.png */
-        /*  9   \falseOkButton.png      */
-        /*  10  \leftSide.png           */
-        /*  11  \page10.png             */
-        /*  12  \page11.png             */
-        /*  13  \page12.png             */
-        /*  14  \page13.png             */
-        /*  15  \page2.png              */
-        /*  16  \page3.png              */
-        /*  17  \page4.png              */
-        /*  18  \page5.png              */
-        /*  19  \page6.png              */
-        /*  20  \page7.png              */
-        /*  21  \page8.png              */
-        /*  22  \page9.png              */
-        /*  23  \scrollRecognition.png  */
-        /*  24  \SearchArea.png         */
-        /*  25  \searchField.png        */
-        /*  26  \searchRecognition.png  */
-        /*  27  \skipToLastPage.png     */
-        /*  28  \step.png               */
+        /*  0   \1pageRecognition.png       */
+        /*  1   \amountRecognition.png      */
+        /*  2   \auctionRecognition.png     */
+        /*  3   \balanceRecognition.png     */
+        /*  4   \betRecognition.png         */
+        /*  5   \buyout.png                 */
+        /*  6   \buyoutRecognition.png      */
+        /*  7   \buyRecognition.png         */
+        /*  8   \confirmRecognition.png     */
+        /*  9   \falseOkButton.png          */
+        /*  10  \leftSide.png               */
+        /*  11  \Ok(alert).png              */
+        /*  12  \Ok(Buy).png                */
+        /*  13  \page10.png                 */
+        /*  14  \page11.png                 */
+        /*  15  \page12.png                 */
+        /*  16  \page13.png                 */
+        /*  17  \page2.png                  */
+        /*  18  \page3.png                  */
+        /*  19  \page4.png                  */
+        /*  20  \page5.png                  */
+        /*  21  \page6.png                  */
+        /*  22  \page7.png                  */
+        /*  23  \page8.png                  */
+        /*  24  \page9.png                  */
+        /*  25  \scrollRecognition.png      */
+        /*  26  \SearchArea.png             */
+        /*  27  \searchField.png            */
+        /*  28  \searchRecognition.png      */
+        /*  29  \skipToLastPage.png         */
+        /*  30  \step.png                   */
+
 
         public ScreenDoings(Bitmap screenshot = null)
         {
@@ -282,12 +286,33 @@ namespace TraderForStalCraft.Scripts
 
         public Rectangle GetSearchButton(Bitmap screenshot = null)
         {
-            return FindMatch(screenshot, Templates[Files[26]]);
+            return FindMatch(screenshot, Templates[@"\searchRecognition.png"]);
         }
 
         public Bitmap CropImage(Bitmap source, Rectangle rect)
         {
             return source.Clone(rect, source.PixelFormat);
+        }
+
+        public int TesseractDetectNumber(Bitmap image)
+        {
+            int value;
+            string stringValue;
+            TesseractEngine tesseract = new TesseractEngine(Directory.GetCurrentDirectory() + @"\Data\traindata", "rus", EngineMode.LstmOnly);
+            Page temp;
+
+            tesseract.SetVariable("tessedit_char_whitelist", "0123456789");
+            tesseract.SetVariable("tessedit_pageseg_mode", "7");
+            temp = tesseract.Process(ConvertBitmapToPixFast(image));
+            stringValue = temp.GetText();
+            stringValue = new string(stringValue.Where(char.IsDigit).ToArray());
+            tesseract.Dispose();
+
+            if (string.IsNullOrEmpty(stringValue))
+                return 0;
+            if(int.TryParse(stringValue, out value))
+                return value;
+            else return 0;
         }
     }
 }

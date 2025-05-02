@@ -164,9 +164,9 @@ namespace TraderForStalCraft.Scripts
 
             // FindAndBuyLots(screen, emulator, screenDoings, currentPrice);
             BuyLots(screen, emulator, screenDoings, currentPrice);
-            emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width/2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height/2));
+            emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width / 2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height / 2));
             emulator.ClearSearchField();
-            emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width/2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height/2));
+            emulator.MoveMouseSmoothly(matches[@"\searchField.png"].X + (matches[@"\searchField.png"].Width / 2), matches[@"\searchField.png"].Y + (matches[@"\searchField.png"].Height / 2));
 
             /* Подробности по покупке                                   */
             /* 1. Найти стоимость лота                                  */
@@ -206,6 +206,25 @@ namespace TraderForStalCraft.Scripts
             string priceOCR;
             string amountOCR;
 
+            Rectangle balanceRect = new Rectangle(
+                matches[@"\balanceRecognition.png"].X,
+                matches[@"\balanceRecognition.png"].Y,
+                matches[@"\scrollRecognition.png"].X - matches[@"\balanceRecognition.png"].X,
+                matches[@"\balanceRecognition.png"].Height
+                );
+            Bitmap balanceBitmap = new Bitmap(sc.CropImage(screen, balanceRect));
+            int balance = sc.TesseractDetectNumber(balanceBitmap);
+
+            if (balance == 0)
+            {
+                Logger("Выход из скрипта, ваш баланс определился как \"0 Рублей\"");
+                Stop();
+                return;
+            }
+
+            Logger($"Баланс Определен как {balance} Рублей");
+
+
             int amountX = matches[@"\amountRecognition.png"].X - (matches[@"\amountRecognition.png"].Width / 6);
             int amountY = matches[@"\amountRecognition.png"].Y + (matches[@"\amountRecognition.png"].Width / 7);
             int amountWigh = matches[@"\amountRecognition.png"].Width / 2;
@@ -213,169 +232,145 @@ namespace TraderForStalCraft.Scripts
 
             int priceX = matches[@"\buyoutRecognition.png"].X - 35;
             int priceY = matches[@"\buyoutRecognition.png"].Y + 25;
+            int currentPage = 1;
+            int scroll = 0;
             int count = 0;
+
             Logger("Поиск точек для покупки завершен");
-            for (int i = 0; i < 9; i++)
+            // Страницы
+            for (int k = 0; k < 12; k++)
             {
-                Logger($"Цикл поиска лотов, ткущий лот {i}");
+                // Скроллы
+                for (int j = 1; j < 9; j++)
+                {
+                    for (int i = 8; i < 9; i++)
+                    {
+                        Logger($"Цикл поиска лотов, ткущий лот {i}");
+                        if (count > 2)
+                        {
+                            return;
+                        }
+
+                        screen = sc.Screenshot();
+
+                        Rectangle amountRect = new Rectangle(
+                            amountX,
+                            amountY + (RowHeight * i),
+                            amountWigh,
+                            amountHeight
+                            );
+
+
+                        Rectangle priceRect = new Rectangle(
+                        priceX,
+                        priceY + (RowHeight * i),
+                        PriceAreaWidth,
+                        PriceAreaHeight);
+
+                        Logger("Определение области поиска координат");
+
+                        // Протестировать работу "количества предметов".
+                        using (Bitmap priceImg = new Bitmap(sc.CropImage(screen, priceRect)))
+                        using (Bitmap amountImg = new Bitmap(sc.CropImage(screen, amountRect)))
+                        {
+                            Logger("Найдены изображения для поиска лотов");
+
+                            int price = sc.TesseractDetectNumber(priceImg);
+                            int amount = sc.TesseractDetectNumber(amountImg);
+
+                            if (price == 0)
+                            {
+                                emulator.MoveMouseSmoothly(priceX, priceY + 50);
+                                emulator.MoveScrollBar(-6, 3);
+                                j++;
+                                i = 0;
+                                count++;
+                                continue;
+                            }
+                            if (amount == 0)
+                                amount = 1;
+
+                            //if (price < balance)
+                            //{
+                                Logger($"Итоговые данные для лота, стоимость:{price}, количество:{amount}, стоимость за 1 ед {price / amount}");
+                                price = price / amount;
+                                Logger("Стоимость лота меньше баланса");
+                                if (price <= neededPrice)
+                                {
+                                    Rectangle Buyout = new Rectangle();
+
+                                    // Нажать на лот
+                                    emulator.MoveMouseSmoothly(priceX, priceY + (RowHeight * i) + 5);
+                                    screen = sc.Screenshot();
+
+                                    // Нажать на кнопку "Выкупить" (для начала надо найти)
+                                    Buyout = sc.FindMatch(screen, sc.Templates[@"\buyRecognition.png"]);
+                                    emulator.MoveMouseSmoothly(Buyout.X + Buyout.Width / 2, Buyout.Y + Buyout.Height / 2);
+
+                                    screen = sc.Screenshot();
+
+                                    if (matchesFromSerialize)
+                                    {
+                                        Logger("Покупка лота с учетом сериализации");
+                                        matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
+                                        emulator.MoveMouseSmoothly(matches[@"\falseOkButton.png"].X + (matches[@"\falseOkButton.png"].Width / 2), matches[@"\falseOkButton.png"].Y + (matches[@"\falseOkButton.png"].Height / 2));
+                                        Logger("лот куплен / не хватило средств");
+                                    }
+                                    else
+                                    {
+                                        Logger("Покупка лота без сериализации");
+
+                                        // Нажать ОК
+                                        if (sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]).X != 0)
+                                        {
+                                            matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
+                                            emulator.MoveMouseSmoothly(matches[@"\falseOkButton.png"].X + (matches[@"\falseOkButton.png"].Width / 2), matches[@"\falseOkButton.png"].Y + (matches[@"\falseOkButton.png"].Height / 2));
+                                        }
+
+                                        Logger("Лот куплен / не хватило средств");
+                                    }
+
+                                    if (scroll < 0)
+                                    {
+                                        emulator.MoveScrollBar(scroll, 10*j);
+                                        scroll = scroll + (-100 * j);
+                                    }
+                                }
+                                else
+                                {
+                                    ++count;
+                                    Logger($"Стоимость оказалась больше чем нужно (осталось попыток на поиск выгодног лота {count}/3) ");
+                                }
+                            //}
+                            //else
+                            //{
+                            //    Logger($"Стоимость лота превышает баланс, переходим к следюещему лоту (баланс:{balance} лот:{price})");
+                            //    continue;
+                            //}
+                        }
+                    }
+
+                    if (count > 2)
+                    {
+                        return;
+                    }
+
+                    scroll = scroll + (-100 * j);
+                }
+
                 if (count > 2)
                 {
                     return;
                 }
 
+                ++currentPage;
+
                 screen = sc.Screenshot();
+                matches[@$"\page{currentPage}.png"] = sc.FindMatch(screen, sc.Templates[@$"\page{currentPage}.png"]);
+                if (matches[@$"\page{currentPage}.png"].X == 0)
+                    return;
 
-                Rectangle amountRect = new Rectangle(
-                    amountX,
-                    amountY + (RowHeight * i),
-                    amountWigh,
-                    amountHeight
-                    );
-
-
-                Rectangle priceRect = new Rectangle(
-                priceX,
-                priceY + (RowHeight * i),
-                PriceAreaWidth,
-                PriceAreaHeight);
-
-                Logger("Определение области поиска координат");
-
-                // Протестировать работу "количества предметов".
-                using (Bitmap priceImg = new Bitmap(sc.CropImage(screen, priceRect)))
-                using (Bitmap amountImg = new Bitmap(sc.CropImage(screen, amountRect)))
-                {
-                    using (TesseractEngine tesseract = new TesseractEngine(Directory.GetCurrentDirectory() + @"\Data\traindata", "rus", EngineMode.LstmOnly))
-                    {
-                        tesseract.SetVariable("tessedit_char_whitelist", "0123456789");
-                        tesseract.SetVariable("tessedit_pageseg_mode", "7");
-
-                        var temp = tesseract.Process(sc.ConvertBitmapToPixFast(priceImg));
-                        priceOCR = temp.GetText();
-                    }
-
-                    Logger($"Стоимость лота {i} - определена как:{priceOCR}");
-
-                    string filteredPrice = new string(priceOCR.Where(char.IsDigit).ToArray());
-
-                    if (string.IsNullOrEmpty(filteredPrice))
-                    {
-                        Logger("Стоимость определена не коректно, переход к следующему лоту");
-                        continue;
-                    }
-
-                    // Скролл нужен для просмотра стаков. (также как и некст пейдж)
-
-                    using (TesseractEngine tesseract = new TesseractEngine(Directory.GetCurrentDirectory() + @"\Data\traindata", "rus", EngineMode.LstmOnly))
-                    {
-                        tesseract.SetVariable("tessedit_char_whitelist", "0123456789");
-                        tesseract.SetVariable("tessedit_pageseg_mode", "7");
-
-                        var temp = tesseract.Process(sc.ConvertBitmapToPixFast(amountImg));
-                        amountOCR = temp.GetText();
-                    }
-
-
-                    Logger($"количество лота {i} - определена как:{amountOCR}");
-
-                    int amount;
-
-                    string amountFiltred = new string(amountOCR.Where(char.IsDigit).ToArray());
-                    if (string.IsNullOrEmpty(amountFiltred))
-                    {
-                        amount = 1;
-                    }
-                    else
-                    {
-                        if (int.TryParse(amountFiltred, out amount))
-                        {
-
-                        }
-                    }
-
-
-                    if (int.TryParse(filteredPrice, out int price))
-                    {
-                        Logger($"Итоговые данные для лота стоимость:{price}, количество{amount}, стоимость за 1 ед {price / amount}");
-                        price = price / amount;
-                        if (price <= neededPrice)
-                        {
-                            if (matchesFromSerialize)
-                            {
-                                Logger("Покупка лота с учетом сериализации");
-                                Rectangle Buy = new Rectangle();
-                                Rectangle OK = new Rectangle();
-
-                                // нажать на стоимость null
-                                emulator.MoveMouseSmoothly(priceX, priceY + (RowHeight * i) + 5);
-                                
-                                // нажать на выкуп null
-                                emulator.MoveMouseSmoothly(priceX+80, priceY + (RowHeight * i) + 40);
-
-                                // ок null
-                                screen = sc.Screenshot();
-                                Thread.Sleep(500);
-                                OK = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
-                                if ((OK.X != 0) & (OK.Y != 0))
-                                {
-                                    matches[@"\falseOkButton.png"] = OK;
-                                    emulator.MoveMouseSmoothly(OK.X + (OK.Width / 2), OK.Y + (OK.Height / 2));
-                                }
-                                Logger("лот куплен / не хватило средств");
-                            }
-                            else
-                            {
-                                Logger("Покупка лота без сериализации");
-                                // нажать на стоимость
-                                emulator.MoveMouseSmoothly(priceX, priceY + (RowHeight * i) + 5);
-                                // скрин
-                                Thread.Sleep(500);
-                                screen = sc.Screenshot();
-                                // записать позицию "выкупить"
-                                matches[@"\buyout.png"] = sc.FindMatch(screen, sc.Templates[@"\buyout.png"]);
-                                // нажать выкупить
-                                emulator.MoveMouseSmoothly(matches[@"\buyout.png"].X + (matches[@"\buyout.png"].Width/2), matches[@"\buyout.png"].Y + (matches[@"\buyout.png"].Height/2));
-                                // скрин
-                                screen = sc.Screenshot();
-                                // записать позицию "подтвердить"
-                                matches[@"\confirmRecognition.png"] = sc.FindMatch(screen, sc.Templates[@"\confirmRecognition.png"]);
-                                // нажать подтвердить
-                                emulator.MoveMouseSmoothly(matches[@"\confirmRecognition.png"].X + (matches[@"\confirmRecognition.png"].Width/2), matches[@"\confirmRecognition.png"].Y + (matches[@"\confirmRecognition.png"].Height/2));
-                                // скрин
-                                screen = sc.Screenshot();
-                                // если появилось "ОК"
-                                if (sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]).X != 0)
-                                {
-                                    // нажать ОК
-                                    matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
-                                    emulator.MoveMouseSmoothly(matches[@"\falseOkButton.png"].X + (matches[@"\falseOkButton.png"].Width/2), matches[@"\falseOkButton.png"].Y + (matches[@"\falseOkButton.png"].Height/2));
-                                    count = 3;
-                                    continue;
-                                }
-                                else if (sc.FindMatch(screen, sc.Templates[@"\confirmRecognition.png"]).X != 0)
-                                {
-                                    matches[@"\confirmRecognition.png"] = sc.FindMatch(screen, sc.Templates[@"\confirmRecognition.png"]);
-                                    emulator.MoveMouseSmoothly(matches[@"\confirmRecognition.png"].X + (matches[@"\confirmRecognition.png"].Width / 2), matches[@"\confirmRecognition.png"].Y + (matches[@"\confirmRecognition.png"].Height / 2));
-                                    continue;
-                                }
-                                Logger("Лот куплен / не хватило средств");
-                            }
-
-                            i = 0;
-
-                            price = int.MaxValue;
-                            emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
-                            emulator.MoveMouseSmoothly(matches[@"\buyoutRecognition.png"].X + (matches[@"\buyoutRecognition.png"].Width / 2), matches[@"\buyoutRecognition.png"].Y + (matches[@"\buyoutRecognition.png"].Height / 2));
-
-                            Logger("Сброс сортировки для поиска следующего лота (по стоимости, без учета количества)");
-                        }
-                        else
-                        {
-                            count++;
-                            Logger($"Стоимость оказалась больше чем нужно (осталось попыток на поиск выгодног лота {count}/3) ");
-                        }
-                    }
-                }
+                emulator.MoveMouseSmoothly(matches[@$"\page{currentPage}.png"].X + (matches[@$"\page{currentPage}.png"].Width / 2), matches[@$"\page{currentPage}.png"].Y + (matches[@$"\page{currentPage}.png"].Height / 2));
             }
         }
 

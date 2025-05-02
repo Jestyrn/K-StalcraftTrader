@@ -21,6 +21,8 @@
     <None Remove="Data\Blueprints\confirmRecognition.png" />
     <None Remove="Data\Blueprints\falseOkButton.png" />
     <None Remove="Data\Blueprints\leftSide.png" />
+    <None Remove="Data\Blueprints\Ok%28alert%29.png" />
+    <None Remove="Data\Blueprints\Ok%28Buy%29.png" />
     <None Remove="Data\Blueprints\page10.png" />
     <None Remove="Data\Blueprints\page11.png" />
     <None Remove="Data\Blueprints\page12.png" />
@@ -85,6 +87,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\leftSide.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\Ok(alert).png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\Ok(Buy).png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page10.png">

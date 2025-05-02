@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Automation;
 using WindowsInput;
 
 namespace TraderForStalCraft.Scripts
@@ -45,6 +46,7 @@ namespace TraderForStalCraft.Scripts
 
         private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
         private const uint MOUSEEVENTF_LEFTUP = 0x0004;
+        private const uint MOUSEEVENTF_WHEEL = 0x0800;
 
         public void MoveMouseSmoothly(int targetX, int targetY, int steps = 20)
         {
@@ -81,6 +83,17 @@ namespace TraderForStalCraft.Scripts
                 mouse_event(MOUSEEVENTF_LEFTUP, targetX, targetY, 0, IntPtr.Zero);
 
                 return;
+            }
+        }
+
+        public void MoveScrollBar(int scrollAmount, int step = 20)
+        {
+            InputSimulator input = new InputSimulator();
+
+            for (int i = 0; i < step; i++)
+            {
+                input.Mouse.VerticalScroll(scrollAmount / step);
+                Thread.Sleep(5);
             }
         }
 
