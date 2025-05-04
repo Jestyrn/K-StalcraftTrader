@@ -8,6 +8,7 @@ using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
 using log4net.Repository.Hierarchy;
+using Microsoft.Extensions.FileSystemGlobbing;
 using NPOI.SS.Formula.Functions;
 using Org.BouncyCastle.Math;
 using Tesseract;
@@ -29,6 +30,7 @@ namespace TraderForStalCraft.Scripts
         private string path = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\PointsSer.json";
         Serialize serialize;
         private bool matchesFromSerialize;
+        private bool pagesCheckbox;
 
         string loggerPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
@@ -45,11 +47,12 @@ namespace TraderForStalCraft.Scripts
 
         }
 
-        public void Start(Dictionary<string, int> data, CancellationToken cts)
+        public void Start(Dictionary<string, int> data, CancellationToken cts, bool pagesCheckbox)
         {
             this.data = new Dictionary<string, int>(data);
             _isStarted = true;
             Logger("Скрипт для закупки запущен");
+            this.pagesCheckbox = pagesCheckbox;
             StartingBuying();
         }
 
@@ -209,7 +212,7 @@ namespace TraderForStalCraft.Scripts
             Rectangle balanceRect = new Rectangle(
                 matches[@"\balanceRecognition.png"].X,
                 matches[@"\balanceRecognition.png"].Y,
-                matches[@"\scrollRecognition.png"].X - matches[@"\balanceRecognition.png"].X,
+                matches[@"\scrollRecognition.png"].X - matches[@"\balanceRecognition.png"].X - 30,
                 matches[@"\balanceRecognition.png"].Height
                 );
             Bitmap balanceBitmap = new Bitmap(sc.CropImage(screen, balanceRect));
@@ -233,23 +236,21 @@ namespace TraderForStalCraft.Scripts
             int priceX = matches[@"\buyoutRecognition.png"].X - 35;
             int priceY = matches[@"\buyoutRecognition.png"].Y + 25;
             int currentPage = 1;
-            int scroll = 0;
             int count = 0;
 
+            Rectangle scrollDown = matches[@"\scrollRecognition.png"];
+
             Logger("Поиск точек для покупки завершен");
-            // Страницы
-            for (int k = 0; k < 12; k++)
+
+            if (pagesCheckbox)
             {
-                // Скроллы
-                for (int j = 1; j < 9; j++)
-                {
-                    for (int i = 8; i < 9; i++)
+                Rectangle pageCoorinates;
+                for (int j = 0; j < 12; j++)
+                { 
+                    // просмотр видемых лотов
+                    for (int i = 0; i < 9; i++)
                     {
                         Logger($"Цикл поиска лотов, ткущий лот {i}");
-                        if (count > 2)
-                        {
-                            return;
-                        }
 
                         screen = sc.Screenshot();
 
@@ -280,18 +281,14 @@ namespace TraderForStalCraft.Scripts
 
                             if (price == 0)
                             {
-                                emulator.MoveMouseSmoothly(priceX, priceY + 50);
-                                emulator.MoveScrollBar(-6, 3);
-                                j++;
-                                i = 0;
                                 count++;
                                 continue;
                             }
                             if (amount == 0)
                                 amount = 1;
 
-                            //if (price < balance)
-                            //{
+                            if (price < balance)
+                            {
                                 Logger($"Итоговые данные для лота, стоимость:{price}, количество:{amount}, стоимость за 1 ед {price / amount}");
                                 price = price / amount;
                                 Logger("Стоимость лота меньше баланса");
@@ -329,24 +326,18 @@ namespace TraderForStalCraft.Scripts
 
                                         Logger("Лот куплен / не хватило средств");
                                     }
-
-                                    if (scroll < 0)
-                                    {
-                                        emulator.MoveScrollBar(scroll, 10*j);
-                                        scroll = scroll + (-100 * j);
-                                    }
                                 }
                                 else
                                 {
                                     ++count;
                                     Logger($"Стоимость оказалась больше чем нужно (осталось попыток на поиск выгодног лота {count}/3) ");
                                 }
-                            //}
-                            //else
-                            //{
-                            //    Logger($"Стоимость лота превышает баланс, переходим к следюещему лоту (баланс:{balance} лот:{price})");
-                            //    continue;
-                            //}
+                            }
+                            else
+                            {
+                                Logger($"Стоимость лота превышает баланс, переходим к следюещему лоту (баланс:{balance} лот:{price})");
+                                continue;
+                            }
                         }
                     }
 
@@ -355,22 +346,132 @@ namespace TraderForStalCraft.Scripts
                         return;
                     }
 
-                    scroll = scroll + (-100 * j);
-                }
+                    if (currentPage == 13)
+                    {
+                        currentPage = 1;
+                        pageCoorinates = new Rectangle();
+                        return;
+                    }
+                    else
+                    {
+                        currentPage++;
 
-                if (count > 2)
+                        Rectangle tempMatchPage = sc.FindMatch(screen, sc.Templates[@$"\page{currentPage}.png"], 0.9);
+
+                        pageCoorinates = new Rectangle(
+                            tempMatchPage.X + (tempMatchPage.Width / 2),
+                            tempMatchPage.Y + (tempMatchPage.Height / 2),
+                            tempMatchPage.Width,
+                            tempMatchPage.Height
+                            );
+                    }
+
+                    if ((pageCoorinates.X != 0) && (pageCoorinates.Y != 0))
+                    {
+                        emulator.MoveMouseSmoothly(pageCoorinates.X, pageCoorinates.Y);
+                    }
+                    else
+                    {
+                        j = 13;
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 9; i++)
                 {
-                    return;
+                    Logger($"Цикл поиска лотов, ткущий лот {i}");
+
+                    screen = sc.Screenshot();
+
+                    Rectangle amountRect = new Rectangle(
+                        amountX,
+                        amountY + (RowHeight * i),
+                        amountWigh,
+                        amountHeight
+                        );
+
+
+                    Rectangle priceRect = new Rectangle(
+                    priceX,
+                    priceY + (RowHeight * i),
+                    PriceAreaWidth,
+                    PriceAreaHeight);
+
+                    Logger("Определение области поиска координат");
+
+                    // Протестировать работу "количества предметов".
+                    using (Bitmap priceImg = new Bitmap(sc.CropImage(screen, priceRect)))
+                    using (Bitmap amountImg = new Bitmap(sc.CropImage(screen, amountRect)))
+                    {
+                        Logger("Найдены изображения для поиска лотов");
+
+                        int price = sc.TesseractDetectNumber(priceImg);
+                        int amount = sc.TesseractDetectNumber(amountImg);
+
+                        if (price == 0)
+                        {
+                            emulator.MoveMouseSmoothly(priceX, priceY + 50);
+                            count++;
+                            continue;
+                        }
+                        if (amount == 0)
+                            amount = 1;
+
+                        if (price < balance)
+                        {
+                            Logger($"Итоговые данные для лота, стоимость:{price}, количество:{amount}, стоимость за 1 ед {price / amount}");
+                            price = price / amount;
+                            Logger("Стоимость лота меньше баланса");
+                            if (price <= neededPrice)
+                            {
+                                Rectangle Buyout = new Rectangle();
+
+                                // Нажать на лот
+                                emulator.MoveMouseSmoothly(priceX, priceY + (RowHeight * i) + 5);
+                                screen = sc.Screenshot();
+
+                                // Нажать на кнопку "Выкупить" (для начала надо найти)
+                                Buyout = sc.FindMatch(screen, sc.Templates[@"\buyRecognition.png"]);
+                                emulator.MoveMouseSmoothly(Buyout.X + Buyout.Width / 2, Buyout.Y + Buyout.Height / 2);
+
+                                screen = sc.Screenshot();
+
+                                if (matchesFromSerialize)
+                                {
+                                    Logger("Покупка лота с учетом сериализации");
+                                    matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
+                                    emulator.MoveMouseSmoothly(matches[@"\falseOkButton.png"].X + (matches[@"\falseOkButton.png"].Width / 2), matches[@"\falseOkButton.png"].Y + (matches[@"\falseOkButton.png"].Height / 2));
+                                    Logger("лот куплен / не хватило средств");
+                                }
+                                else
+                                {
+                                    Logger("Покупка лота без сериализации");
+
+                                    // Нажать ОК
+                                    if (sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]).X != 0)
+                                    {
+                                        matches[@"\falseOkButton.png"] = sc.FindMatch(screen, sc.Templates[@"\falseOkButton.png"]);
+                                        emulator.MoveMouseSmoothly(matches[@"\falseOkButton.png"].X + (matches[@"\falseOkButton.png"].Width / 2), matches[@"\falseOkButton.png"].Y + (matches[@"\falseOkButton.png"].Height / 2));
+                                    }
+
+                                    Logger("Лот куплен / не хватило средств");
+                                }
+                            }
+                            else
+                            {
+                                ++count;
+                                Logger($"Стоимость оказалась больше чем нужно (осталось попыток на поиск выгодног лота {count}/3) ");
+                            }
+                        }
+                        else
+                        {
+                            Logger($"Стоимость лота превышает баланс, переходим к следюещему лоту (баланс:{balance} лот:{price})");
+                            return;
+                        }
+                    }
                 }
-
-                ++currentPage;
-
-                screen = sc.Screenshot();
-                matches[@$"\page{currentPage}.png"] = sc.FindMatch(screen, sc.Templates[@$"\page{currentPage}.png"]);
-                if (matches[@$"\page{currentPage}.png"].X == 0)
-                    return;
-
-                emulator.MoveMouseSmoothly(matches[@$"\page{currentPage}.png"].X + (matches[@$"\page{currentPage}.png"].Width / 2), matches[@$"\page{currentPage}.png"].Y + (matches[@$"\page{currentPage}.png"].Height / 2));
             }
         }
 

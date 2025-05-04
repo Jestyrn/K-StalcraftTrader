@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Automation;
@@ -86,14 +87,32 @@ namespace TraderForStalCraft.Scripts
             }
         }
 
-        public void MoveScrollBar(int scrollAmount, int step = 20)
+        public void MoveScrollBar(int x, int y, int holdTime, int steps = 20)
         {
             InputSimulator input = new InputSimulator();
 
-            for (int i = 0; i < step; i++)
+            if (random == null)
             {
-                input.Mouse.VerticalScroll(scrollAmount / step);
-                Thread.Sleep(5);
+                Point current = Cursor.Position;
+                for (int i = 0; i < steps; i++)
+                {
+                    double ratio = (double)i / steps;
+                    int newX = current.X + (int)((x - current.X) * ratio);
+                    int newY = current.Y + (int)((y - current.Y) * ratio);
+
+                    newX += random.Next(-2, 3);
+                    newY += random.Next(-2, 3);
+
+                    Cursor.Position = new Point((int)newX, (int)newY);
+                    Thread.Sleep(random.Next(0, delayM));
+                }
+                input.Mouse.LeftButtonDown();
+                Thread.Sleep(holdTime);
+                input.Mouse.LeftButtonUp();
+            }
+            else
+            {
+
             }
         }
 

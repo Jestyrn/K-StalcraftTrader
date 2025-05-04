@@ -268,7 +268,7 @@ namespace TraderForStalCraft
 
             task = new Thread(() =>
             {
-                script.Start(data, _cts.Token); // Передаем токен отмены в скрипт
+                script.Start(data, _cts.Token, SkipPagesCheckbox.Enabled); // Передаем токен отмены в скрипт
             });
 
             task.IsBackground = true;
@@ -286,12 +286,8 @@ namespace TraderForStalCraft
                 // Даем скрипту время на корректное завершение
                 if (task != null && task.IsAlive)
                 {
-                    bool stopped = task.Join(500); // Ждем до 500мс
-                    if (!stopped)
-                    {
-                        task.Abort(); // Только в крайнем случае!
-                        Console.WriteLine("Script was forcibly stopped");
-                    }
+                    task.Abort();
+                    task = null;
                 }
 
                 _cts.Dispose();
