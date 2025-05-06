@@ -73,9 +73,8 @@ namespace TraderForStalCraft.Scripts.MainScripts
 
         private void WithoutSerialization()
         {
-            _screen = _sp.CaptureGame();
-            _screen = _sp.PreprocessImage(_screen);
-            matches = _sp.FindAllTemplates(_screen);
+            _screen = _sp.CaptureScreen();
+            matches = _sp.GetMatches(_screen);
 
             _fileManager.SaveToJson<List<Rectangls>>(pathToFile, matches);
         }

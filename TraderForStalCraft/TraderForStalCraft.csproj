@@ -56,6 +56,7 @@
 
   <ItemGroup>
     <PackageReference Include="Emgu.CV" Version="4.10.0.5680" />
+    <PackageReference Include="Emgu.CV.Bitmap" Version="4.10.0.5680" />
     <PackageReference Include="Emgu.CV.runtime.windows" Version="4.10.0.5680" />
     <PackageReference Include="EPPlus" Version="8.0.2" />
     <PackageReference Include="InputSimulator" Version="1.0.4" />
