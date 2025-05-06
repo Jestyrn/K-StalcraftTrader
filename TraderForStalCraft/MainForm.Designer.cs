@@ -20,10 +20,10 @@ namespace TraderForStalCraft
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            DataGridViewCellStyle dataGridViewCellStyle7 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle8 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle5 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle6 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
             TabControll = new TabControl();
             MainPage = new TabPage();
             startButton = new Button();
@@ -35,8 +35,9 @@ namespace TraderForStalCraft
             Column4 = new DataGridViewTextBoxColumn();
             balanceLabel = new Label();
             foundItemsLabel = new Label();
-            bidsMadeLabel = new Label();
+            boughtLabel = new Label();
             SettingsPage = new TabPage();
+            SkipPagesCheckbox = new CheckBox();
             inputScrol = new NumericUpDown();
             scrolDelay = new NumericUpDown();
             dragDropPanel = new Panel();
@@ -54,7 +55,6 @@ namespace TraderForStalCraft
             dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
             toolTip = new ToolTip(components);
             backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
-            SkipPagesCheckbox = new CheckBox();
             TabControll.SuspendLayout();
             MainPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)itemsDataGridView).BeginInit();
@@ -83,7 +83,7 @@ namespace TraderForStalCraft
             MainPage.Controls.Add(itemsDataGridView);
             MainPage.Controls.Add(balanceLabel);
             MainPage.Controls.Add(foundItemsLabel);
-            MainPage.Controls.Add(bidsMadeLabel);
+            MainPage.Controls.Add(boughtLabel);
             MainPage.Location = new Point(4, 24);
             MainPage.Name = "MainPage";
             MainPage.Padding = new Padding(3);
@@ -100,7 +100,6 @@ namespace TraderForStalCraft
             startButton.TabIndex = 0;
             startButton.Text = "Запустить";
             startButton.UseVisualStyleBackColor = true;
-            startButton.Click += startButton_Click;
             // 
             // stopButton
             // 
@@ -111,32 +110,30 @@ namespace TraderForStalCraft
             stopButton.TabIndex = 1;
             stopButton.Text = "Остановить";
             stopButton.UseVisualStyleBackColor = true;
-            stopButton.Click += stopButton_Click;
             // 
             // itemsDataGridView
             // 
-            itemsDataGridView.AllowDrop = true;
             itemsDataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             itemsDataGridView.BackgroundColor = Color.White;
             itemsDataGridView.BorderStyle = BorderStyle.Fixed3D;
-            dataGridViewCellStyle7.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle7.BackColor = Color.LightGray;
-            dataGridViewCellStyle7.Font = new Font("Segoe UI", 9F);
-            dataGridViewCellStyle7.ForeColor = SystemColors.WindowText;
-            dataGridViewCellStyle7.SelectionBackColor = SystemColors.Highlight;
-            dataGridViewCellStyle7.SelectionForeColor = SystemColors.HighlightText;
-            dataGridViewCellStyle7.WrapMode = DataGridViewTriState.True;
-            itemsDataGridView.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = Color.LightGray;
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle1.ForeColor = SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+            itemsDataGridView.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             itemsDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             itemsDataGridView.Columns.AddRange(new DataGridViewColumn[] { Column1, Column2, Column3, Column4 });
-            dataGridViewCellStyle8.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle8.BackColor = SystemColors.Window;
-            dataGridViewCellStyle8.Font = new Font("Segoe UI", 9F);
-            dataGridViewCellStyle8.ForeColor = SystemColors.ControlText;
-            dataGridViewCellStyle8.SelectionBackColor = SystemColors.Highlight;
-            dataGridViewCellStyle8.SelectionForeColor = SystemColors.HighlightText;
-            dataGridViewCellStyle8.WrapMode = DataGridViewTriState.False;
-            itemsDataGridView.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = SystemColors.Window;
+            dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle2.ForeColor = SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
+            itemsDataGridView.DefaultCellStyle = dataGridViewCellStyle2;
             itemsDataGridView.EnableHeadersVisualStyles = false;
             itemsDataGridView.Location = new Point(20, 70);
             itemsDataGridView.Name = "itemsDataGridView";
@@ -186,14 +183,14 @@ namespace TraderForStalCraft
             foundItemsLabel.TabIndex = 4;
             foundItemsLabel.Text = "Найдено предметов: 0";
             // 
-            // bidsMadeLabel
+            // boughtLabel
             // 
-            bidsMadeLabel.AutoSize = true;
-            bidsMadeLabel.Location = new Point(755, 480);
-            bidsMadeLabel.Name = "bidsMadeLabel";
-            bidsMadeLabel.Size = new Size(105, 15);
-            bidsMadeLabel.TabIndex = 5;
-            bidsMadeLabel.Text = "Сделано ставок: 0";
+            boughtLabel.AutoSize = true;
+            boughtLabel.Location = new Point(733, 480);
+            boughtLabel.Name = "boughtLabel";
+            boughtLabel.Size = new Size(127, 15);
+            boughtLabel.TabIndex = 5;
+            boughtLabel.Text = "куплено предметов: 0";
             // 
             // SettingsPage
             // 
@@ -218,6 +215,18 @@ namespace TraderForStalCraft
             SettingsPage.Text = "Настройки";
             SettingsPage.UseVisualStyleBackColor = true;
             // 
+            // SkipPagesCheckbox
+            // 
+            SkipPagesCheckbox.AutoSize = true;
+            SkipPagesCheckbox.Checked = true;
+            SkipPagesCheckbox.CheckState = CheckState.Checked;
+            SkipPagesCheckbox.Location = new Point(12, 179);
+            SkipPagesCheckbox.Name = "SkipPagesCheckbox";
+            SkipPagesCheckbox.Size = new Size(163, 19);
+            SkipPagesCheckbox.TabIndex = 12;
+            SkipPagesCheckbox.Text = "Пролистывание страниц";
+            SkipPagesCheckbox.UseVisualStyleBackColor = true;
+            // 
             // inputScrol
             // 
             inputScrol.Location = new Point(154, 277);
@@ -225,7 +234,6 @@ namespace TraderForStalCraft
             inputScrol.Size = new Size(54, 23);
             inputScrol.TabIndex = 11;
             inputScrol.Value = new decimal(new int[] { 100, 0, 0, 0 });
-            inputScrol.ValueChanged += inputScrol_ValueChanged;
             // 
             // scrolDelay
             // 
@@ -236,7 +244,6 @@ namespace TraderForStalCraft
             scrolDelay.Size = new Size(54, 23);
             scrolDelay.TabIndex = 11;
             scrolDelay.Value = new decimal(new int[] { 10, 0, 0, 0 });
-            scrolDelay.ValueChanged += scrolDelay_ValueChanged;
             // 
             // dragDropPanel
             // 
@@ -250,7 +257,6 @@ namespace TraderForStalCraft
             // 
             // dragDropInfoLabel
             // 
-            dragDropInfoLabel.AllowDrop = true;
             dragDropInfoLabel.Dock = DockStyle.Fill;
             dragDropInfoLabel.Location = new Point(0, 0);
             dragDropInfoLabel.Name = "dragDropInfoLabel";
@@ -258,9 +264,6 @@ namespace TraderForStalCraft
             dragDropInfoLabel.TabIndex = 0;
             dragDropInfoLabel.Text = "Перетащите файл с предметами сюда\r\n(Поддерживаются: .txt, .xls, .xlsx, .xltx, .csv)";
             dragDropInfoLabel.TextAlign = ContentAlignment.MiddleCenter;
-            dragDropInfoLabel.DragDrop += dragDropInfoLabel_DragDrop;
-            dragDropInfoLabel.DragEnter += dragDropInfoLabel_DragEnter;
-            dragDropInfoLabel.DragLeave += dragDropInfoLabel_DragLeave;
             // 
             // DeleteDataButton
             // 
@@ -270,7 +273,6 @@ namespace TraderForStalCraft
             DeleteDataButton.TabIndex = 0;
             DeleteDataButton.Text = "Очистить таблицу";
             DeleteDataButton.UseVisualStyleBackColor = true;
-            DeleteDataButton.Click += DeleteDataButton_Click;
             // 
             // SaveDataButton
             // 
@@ -280,7 +282,6 @@ namespace TraderForStalCraft
             SaveDataButton.TabIndex = 0;
             SaveDataButton.Text = "Сохранить таблицу";
             SaveDataButton.UseVisualStyleBackColor = true;
-            SaveDataButton.Click += SaveDataButton_Click;
             // 
             // loadItemsButton
             // 
@@ -290,7 +291,6 @@ namespace TraderForStalCraft
             loadItemsButton.TabIndex = 0;
             loadItemsButton.Text = "Загрузить файл вручную";
             loadItemsButton.UseVisualStyleBackColor = true;
-            loadItemsButton.Click += loadItemsButton_Click;
             // 
             // label3
             // 
@@ -343,24 +343,24 @@ namespace TraderForStalCraft
             trackedItemsDataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             trackedItemsDataGridView.BackgroundColor = Color.White;
             trackedItemsDataGridView.BorderStyle = BorderStyle.Fixed3D;
-            dataGridViewCellStyle5.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle5.BackColor = Color.LightGray;
-            dataGridViewCellStyle5.Font = new Font("Segoe UI", 9F);
-            dataGridViewCellStyle5.ForeColor = SystemColors.WindowText;
-            dataGridViewCellStyle5.SelectionBackColor = SystemColors.Highlight;
-            dataGridViewCellStyle5.SelectionForeColor = SystemColors.HighlightText;
-            dataGridViewCellStyle5.WrapMode = DataGridViewTriState.True;
-            trackedItemsDataGridView.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = Color.LightGray;
+            dataGridViewCellStyle3.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle3.ForeColor = SystemColors.WindowText;
+            dataGridViewCellStyle3.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = DataGridViewTriState.True;
+            trackedItemsDataGridView.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
             trackedItemsDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             trackedItemsDataGridView.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn1, dataGridViewTextBoxColumn2 });
-            dataGridViewCellStyle6.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = SystemColors.Window;
-            dataGridViewCellStyle6.Font = new Font("Segoe UI", 9F);
-            dataGridViewCellStyle6.ForeColor = SystemColors.ControlText;
-            dataGridViewCellStyle6.SelectionBackColor = SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = DataGridViewTriState.False;
-            trackedItemsDataGridView.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = SystemColors.Window;
+            dataGridViewCellStyle4.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle4.ForeColor = SystemColors.ControlText;
+            dataGridViewCellStyle4.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = DataGridViewTriState.False;
+            trackedItemsDataGridView.DefaultCellStyle = dataGridViewCellStyle4;
             trackedItemsDataGridView.EnableHeadersVisualStyles = false;
             trackedItemsDataGridView.Location = new Point(350, 38);
             trackedItemsDataGridView.Name = "trackedItemsDataGridView";
@@ -379,18 +379,6 @@ namespace TraderForStalCraft
             dataGridViewTextBoxColumn2.HeaderText = "Макс. цена";
             dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
             dataGridViewTextBoxColumn2.ReadOnly = true;
-            // 
-            // SkipPagesCheckbox
-            // 
-            SkipPagesCheckbox.AutoSize = true;
-            SkipPagesCheckbox.Checked = true;
-            SkipPagesCheckbox.CheckState = CheckState.Checked;
-            SkipPagesCheckbox.Location = new Point(12, 179);
-            SkipPagesCheckbox.Name = "SkipPagesCheckbox";
-            SkipPagesCheckbox.Size = new Size(163, 19);
-            SkipPagesCheckbox.TabIndex = 12;
-            SkipPagesCheckbox.Text = "Пролистывание страниц";
-            SkipPagesCheckbox.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
@@ -426,7 +414,7 @@ namespace TraderForStalCraft
         private System.Windows.Forms.DataGridView itemsDataGridView;
         private System.Windows.Forms.Label balanceLabel;
         private System.Windows.Forms.Label foundItemsLabel;
-        private System.Windows.Forms.Label bidsMadeLabel;
+        private System.Windows.Forms.Label boughtLabel;
         private System.Windows.Forms.Button loadItemsButton;
         private System.Windows.Forms.Label delayRangeLabel;
         private System.Windows.Forms.Panel dragDropPanel;

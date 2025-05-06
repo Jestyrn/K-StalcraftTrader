@@ -1,95 +1,357 @@
-﻿using System.ComponentModel;
-using System.Text.Json;
-using OfficeOpenXml;
-using TraderForStalCraft.Scripts;
-using System.IO;
-using LicenseContext = OfficeOpenXml.LicenseContext;
-using NPOI.HSSF.UserModel;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
-using System.Globalization;
-using System.Diagnostics;
-using TraderForStalCraft.Data.Serialize;
+﻿using System.Windows.Forms;
+using Emgu.CV.Ocl;
+using MiNET.Blocks;
 using NPOI.SS.Formula.Functions;
+using TraderForStalCraft.Interfaces;
+using TraderForStalCraft.Proprties;
+using TraderForStalCraft.Scripts;
+using TraderForStalCraft.Scripts.HelperScripts;
+using TraderForStalCraft.Scripts.MainScripts;
 
 namespace TraderForStalCraft
 {
     public partial class MainForm : Form
     {
-        private string mind = "";
-        private StartingScript script;
-        private int step;
-        private Thread task;
+        private StartingScript _runningScript;
+        private readonly FileManager _fileManager;
+        private readonly string _configPath;
+        private readonly string _serializePath;
+        private readonly string _serializeHeaderPath;
+        private AppConfig _config;
+        private string _currentDragText;
         private CancellationTokenSource _cts;
+        private readonly Logger _logger = new Logger();
+        private const Keys StopKey = Keys.F12;
+        private ScreenProcessor screenProcessor;
+        private Dictionary<string, Rectangle> _templates;
+        private Bitmap screen;
 
-        public MainForm()
+        public MainForm(FileManager fileManager)
         {
-            string pathToSerilize = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
-            string pathToRandomize = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
-
             InitializeComponent();
 
-            script = new StartingScript(scrolDelay.Value, inputScrol.Value);
+            _fileManager = fileManager;
+            _serializeHeaderPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Serialize", "Save");
+            _serializePath = Path.Combine(Directory.GetCurrentDirectory(),"Data", "Blueprints");
+            _configPath = Path.Combine(_serializeHeaderPath, "Config.json");
 
-            if (File.Exists(pathToSerilize))
-                LoadFromJsonDataGrid(pathToSerilize);
-            if (File.Exists(pathToRandomize))
-                LoadFromJsonRandomize(pathToRandomize);
+            InitializeDragDropSystem();
+            InitializeTrackedItemsGrid();
+            screenProcessor = new ScreenProcessor(_serializePath);
+
+            LoadConfig();
+            SetupEventHandlers();
+
+            KeyboardHook.OnKeyPressed += key =>
+            {
+                if (key == StopKey && _runningScript?.IsRunning == true)
+                    this.Invoke((MethodInvoker)StopScript);
+            };
+
+            KeyboardHook.Start();
         }
 
-        private void dragDropInfoLabel_DragEnter(object sender, DragEventArgs e)
+        private void InitializeDragDropSystem()
         {
-            mind = dragDropInfoLabel.Text;
-            dragDropInfoLabel.Text = "Готовы принимать Ваш файл.";
-            dragDropPanel.Capture = true;
-            e.Effect = DragDropEffects.Copy;
+            dragDropPanel.AllowDrop = true;
+            dragDropInfoLabel.Text = "Перетащите файл сюда (.txt, .xls, .xlsx)";
+
+            // Явная подписка на события
+            dragDropPanel.DragEnter += (s, e) =>
+            {
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    dragDropInfoLabel.Text = "Отпустите для загрузки";
+                    dragDropInfoLabel.ForeColor = Color.Blue;
+                    e.Effect = DragDropEffects.Copy;
+                }
+            };
+
+            dragDropPanel.DragLeave += (s, e) =>
+            {
+                dragDropInfoLabel.Text = "Перетащите файл сюда (.txt, .xls, .xlsx)";
+                dragDropInfoLabel.ForeColor = SystemColors.ControlText;
+            };
+
+            dragDropPanel.DragDrop += (s, e) =>
+            {
+                try
+                {
+                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length == 1)
+                    {
+                        ProcessDroppedFile(files[0]);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    dragDropInfoLabel.Text = "Перетащите файл сюда (.txt, .xls, .xlsx)";
+                    dragDropInfoLabel.ForeColor = SystemColors.ControlText;
+                }
+            };
         }
 
-        private void dragDropInfoLabel_DragLeave(object sender, EventArgs e)
+        private void InitializeTrackedItemsGrid()
         {
-            dragDropInfoLabel.Text = mind;
+            trackedItemsDataGridView.Columns.Clear();
+
+            // Колонка "Название"
+            var nameColumn = new DataGridViewTextBoxColumn
+            {
+                Name = "Name",
+                HeaderText = "Название",
+                DataPropertyName = "Name",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+            };
+
+            // Колонка "Цена"
+            var priceColumn = new DataGridViewTextBoxColumn
+            {
+                Name = "Price",
+                HeaderText = "Макс. цена",
+                DataPropertyName = "Price",
+                Width = 150
+            };
+
+            trackedItemsDataGridView.Columns.AddRange(nameColumn, priceColumn);
+            trackedItemsDataGridView.AllowUserToAddRows = false;
         }
 
-        private void dragDropInfoLabel_DragDrop(object sender, DragEventArgs e)
+        private void ProcessDroppedFile(string filePath)
         {
-            string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
-            if (paths.Length > 1)
+            try
             {
-                MessageBox.Show("Перенесите 1 файл", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            string path = paths[0];
+                var products = _fileManager.ParseFile<Product>(filePath);
 
-            if (string.IsNullOrEmpty(path))
+                // Очищаем и обновляем DataGridView
+                trackedItemsDataGridView.Rows.Clear();
+
+                foreach (var product in products)
+                {
+                    trackedItemsDataGridView.Rows.Add(product.Name, product.Price);
+                }
+
+                // Сохраняем изменения
+                SaveConfig();
+
+                MessageBox.Show($"Успешно загружено {products.Count} предметов",
+                    "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
             {
-                MessageBox.Show("Неудается определить путь файла", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                MessageBox.Show($"Ошибка загрузки файла: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            if (!File.Exists(path))
-            {
-                MessageBox.Show("файл не существует", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            string extension = Path.GetExtension(path).ToLower();
-            if (extension != ".txt" && extension != ".xls" && extension != ".xlsx" && extension != ".csv")
-            {
-                MessageBox.Show("не верный формат", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            LoadFile(path);
         }
 
-        private void loadItemsButton_Click(object sender, EventArgs e)
+        private void LoadConfig()
         {
-            using (OpenFileDialog dialog = new OpenFileDialog())
+            try
             {
-                dialog.Filter = "(*.txt)|*.txt|(*xls)|*.xls|(*xlsx)|*xlsx|(*.scv)|*.scv";
+                if (_fileManager.Exists(_configPath))
+                {
+                    _config = _fileManager.LoadFromJson<AppConfig>(_configPath);
+                    ApplyConfigToUI();
+                }
+                else
+                {
+                    _config = new AppConfig();
+                    Directory.CreateDirectory(Path.GetDirectoryName(_configPath));
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки конфига: {ex.Message}");
+                _config = new AppConfig();
+            }
+        }
+
+        private void ApplyConfigToUI()
+        {
+            scrolDelay.Value = _config.ActionDelay;
+            inputScrol.Value = _config.InputSpeed;
+            SkipPagesCheckbox.Checked = _config.SkipPages;
+
+            trackedItemsDataGridView.Rows.Clear();
+            foreach (var item in _config.TrackedItems)
+            {
+                trackedItemsDataGridView.Rows.Add(item.Name, item.Price);
+            }
+        }
+
+        private void SaveConfig()
+        {
+            _config.ActionDelay = scrolDelay.Value;
+            _config.InputSpeed = inputScrol.Value;
+            _config.SkipPages = SkipPagesCheckbox.Checked;
+
+            _config.TrackedItems.Clear();
+            foreach (DataGridViewRow row in trackedItemsDataGridView.Rows)
+            {
+                if (row.Cells[0].Value != null && row.Cells[1].Value != null)
+                {
+                    _config.TrackedItems.Add(new Product
+                    {
+                        Name = row.Cells[0].Value.ToString(),
+                        Price = row.Cells[1].Value.ToString()
+                    });
+                }
+            }
+
+            _fileManager.SaveToJson(_configPath, _config);
+        }
+
+        private void SetupEventHandlers()
+        {
+            // Обработчики NumericUpDown и CheckBox
+            scrolDelay.ValueChanged += (s, e) => SaveConfig();
+            inputScrol.ValueChanged += (s, e) => SaveConfig();
+            SkipPagesCheckbox.CheckedChanged += (s, e) => SaveConfig();
+
+            // Кнопки управления
+            SaveDataButton.Click += (s, e) => SaveConfig();
+            DeleteDataButton.Click += DeleteTrackedItems;
+            loadItemsButton.Click += LoadItemsFromFile;
+
+            // Drag&Drop обработчики (лямбда-версия)
+            dragDropPanel.DragEnter += (sender, e) =>
+            {
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    dragDropInfoLabel.Text = "Отпустите файл для загрузки";
+                    dragDropInfoLabel.ForeColor = Color.Blue;
+                    e.Effect = DragDropEffects.Copy;
+                }
+                else
+                {
+                    e.Effect = DragDropEffects.None;
+                }
+            };
+
+            dragDropPanel.DragLeave += (sender, e) =>
+            {
+                dragDropInfoLabel.Text = _currentDragText;
+                dragDropInfoLabel.ForeColor = SystemColors.ControlText;
+            };
+
+            dragDropPanel.DragDrop += (sender, e) =>
+            {
+                try
+                {
+                    dragDropInfoLabel.Text = _currentDragText;
+                    dragDropInfoLabel.ForeColor = SystemColors.ControlText;
+
+                    if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                    {
+                        string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                        if (files.Length == 1)
+                        {
+                            LoadFile(files[0]);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Пожалуйста, перетащите только один файл",
+                                "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при обработке файла: {ex.Message}",
+                        "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+
+            // Заглушки для кнопок скрипта
+            startButton.Click += (s, e) => StartScript();
+            stopButton.Click += (s, e) => StopScript();
+        }
+
+        private void StartScript()
+        {
+            // Проверка на запуск игры и активность окна игры.
+            try
+            {
+                if (_runningScript != null && _runningScript.IsRunning)
+                {
+                    MessageBox.Show("Скрипт уже запущен");
+                    return;
+                }
+
+                var itemsData = GetTrackedItems();
+                if (itemsData.Count == 0)
+                {
+                    MessageBox.Show("Нет предметов для отслеживания");
+                    return;
+                }
+
+                startButton.Enabled = false;
+                stopButton.Enabled = true;
+
+                CompletePreparation.pathToFile = _serializeHeaderPath;
+
+                _cts = new CancellationTokenSource();
+                _runningScript = new StartingScript(scrolDelay.Value, inputScrol.Value, _logger, screenProcessor, _fileManager);
+
+                Task.Run(() => _runningScript.Start(itemsData, _cts.Token, SkipPagesCheckbox.Checked));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}");
+            }
+        }
+
+        private void StopScript()
+        {
+            try
+            {
+                _cts?.Cancel();
+                _runningScript?.Stop();
+                startButton.Enabled = true;
+                stopButton.Enabled = false;
+                MessageBox.Show("Скрипт остановлен");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}");
+            }
+        }
+
+        private Dictionary<string, int> GetTrackedItems()
+        {
+            var items = new Dictionary<string, int>();
+            foreach (DataGridViewRow row in trackedItemsDataGridView.Rows)
+            {
+                if (row.Cells[0].Value != null && row.Cells[1].Value != null)
+                {
+                    if (int.TryParse(row.Cells[1].Value.ToString(), out int price))
+                    {
+                        items[row.Cells[0].Value.ToString()] = price;
+                    }
+                }
+            }
+            return items;
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            _cts?.Cancel();
+            _runningScript?.Stop();
+            base.OnFormClosing(e);
+        }
+
+        private void LoadItemsFromFile(object sender, EventArgs e)
+        {
+            using (var dialog = new OpenFileDialog())
+            {
+                dialog.Filter = "Текстовые файлы (*.txt)|*.txt|Excel файлы (*.xls, *.xlsx)|*.xls;*.xlsx";
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    MessageBox.Show("Успешно", "Путь к файлу выбран", MessageBoxButtons.OK, MessageBoxIcon.None);
                     LoadFile(dialog.FileName);
                 }
             }
@@ -97,291 +359,102 @@ namespace TraderForStalCraft
 
         private void LoadFile(string path)
         {
-            trackedItemsDataGridView.Rows.Clear();
-            string extencion = Path.GetExtension(path).ToLower();
-            string[] temp;
-            string[] data;
-            List<Product> products = new List<Product>();
             try
             {
-                switch (extencion)
+                var products = _fileManager.ParseFile<Product>(path);
+
+                // Очищаем только если загрузка прошла успешно
+                trackedItemsDataGridView.Rows.Clear();
+
+                foreach (var product in products)
                 {
-                    case ".txt":
-                        data = File.ReadAllLines(path);
-                        for (global::System.Int32 i = 0; i < data.Length; i++)
-                        {
-                            temp = data[i].Split(':');
-                            products.Add(new Product
-                            {
-                                Name = temp[0],
-                                Price = temp[1],
-                            });
-                        }
-                        break;
-
-                    case ".xls":
-                    case ".xlsx":
-                        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-                        {
-                            IWorkbook workbook;
-
-                            // Определяем формат файла
-                            if (extencion.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
-                            {
-                                workbook = new XSSFWorkbook(fs); // Для .xlsx
-                            }
-                            else
-                            {
-                                workbook = new HSSFWorkbook(fs); // Для .xls
-                            }
-
-                            var sheet = workbook.GetSheetAt(0); // Первый лист
-
-                            for (int row = 1; row <= sheet.LastRowNum; row++) // Начинаем с 1 (пропускаем заголовок)
-                            {
-                                var currentRow = sheet.GetRow(row);
-                                if (currentRow == null) continue;
-
-                                products.Add(new Product
-                                {
-                                    Name = GetCellValue(currentRow.GetCell(0)), // Колонка A
-                                    Price = GetCellValue(currentRow.GetCell(1))  // Колонка B
-                                });
-                            }
-                        }
-                        break;
-
-                    default:
-                        MessageBox.Show($"Формат файла {extencion} не поддерживается");
-                        break;
-                }
-            }
-            catch
-            {
-                MessageBox.Show("Ошибка", "Проверьте все строки, где-то ошибка!");
-                return;
-            }
-
-            for (int i = 0; i < products.Count; i++)
-            {
-                trackedItemsDataGridView.Rows.Add(products[i].Name, products[i].Price);
-            }
-        }
-
-        private string GetCellValue(ICell cell)
-        {
-            if (cell == null) return string.Empty;
-
-            return cell.CellType switch
-            {
-                CellType.String => cell.StringCellValue.Trim(),
-                CellType.Numeric => cell.NumericCellValue.ToString(CultureInfo.InvariantCulture),
-                CellType.Boolean => cell.BooleanCellValue.ToString(),
-                _ => cell.ToString().Trim()
-            };
-        }
-
-        private void SaveDataButton_Click(object sender, EventArgs e)
-        {
-            List<Product> products = new List<Product>();
-
-            for (int i = 0; i < trackedItemsDataGridView.Rows.Count; i++)
-            {
-                products.Add(new Product
-                {
-                    Name = trackedItemsDataGridView[0, i].Value.ToString(),
-                    Price = trackedItemsDataGridView[1, i].Value.ToString(),
-                });
-            }
-
-            SaveToJsonFile(products);
-        }
-
-        private void SaveToJsonFile(List<Product> products)
-        {
-            string baseDirectory = Directory.GetCurrentDirectory();
-            string filePath = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
-            string json;
-            try
-            {
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true, // Красивое форматирование
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // Для кириллицы
-                };
-                json = JsonSerializer.Serialize(products, options);
-
-                if (!File.Exists(baseDirectory))
-                    Directory.CreateDirectory(baseDirectory + "\\Data\\");
-                if (!File.Exists(baseDirectory + "\\Data\\"))
-                    Directory.CreateDirectory(baseDirectory + "\\Data\\Serialize\\");
-                File.WriteAllText(filePath, json);
-            }
-            catch
-            {
-                MessageBox.Show("Ошибка", "Не удолось сохранить данные.");
-                return;
-            }
-
-        }
-
-        private void LoadFromJsonDataGrid(string filePath)
-        {
-            string json = File.ReadAllText(filePath);
-            var returned = JsonSerializer.Deserialize<List<Product>>(json) ?? new List<Product>();
-
-            for (int i = 0; i < returned.Count; i++)
-            {
-                trackedItemsDataGridView.Rows.Add(returned[i].Name, returned[i].Price);
-            }
-        }
-
-        private void DeleteDataButton_Click(object sender, EventArgs e)
-        {
-            string filePath = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Serialize.json";
-            if (File.Exists(filePath))
-                File.Delete(filePath);
-            trackedItemsDataGridView.Rows.Clear();
-        }
-
-        private void LoadFromJsonRandomize(string filePath)
-        {
-            string json = File.ReadAllText(filePath);
-            var returned = JsonSerializer.Deserialize<DataRandom>(json) ?? new DataRandom();
-
-            scrolDelay.Value = returned.Delay;
-            inputScrol.Value = returned.Speed;
-        }
-
-        private void startButton_Click(object sender, EventArgs e)
-        {
-            startButton.Enabled = false;
-            stopButton.Enabled = true;
-
-            Dictionary<string, int> data = new Dictionary<string, int>();
-            for (int i = 0; i < trackedItemsDataGridView.Rows.Count; i++)
-            {
-                data.Add(trackedItemsDataGridView[0, i].Value.ToString(), Convert.ToInt32(trackedItemsDataGridView[1, i].Value));
-            }
-
-            _cts = new CancellationTokenSource();
-
-            task = new Thread(() =>
-            {
-                script.Start(data, _cts.Token, SkipPagesCheckbox.Enabled); // Передаем токен отмены в скрипт
-            });
-
-            task.IsBackground = true;
-            task.Start();
-        }
-
-        private void stopButton_Click(object sender, EventArgs e)
-        {
-            stopButton.Enabled = false;
-            startButton.Enabled = true;
-            if (_cts != null)
-            {
-                _cts.Cancel(); // Посылаем сигнал отмены
-
-                // Даем скрипту время на корректное завершение
-                if (task != null && task.IsAlive)
-                {
-                    task.Abort();
-                    task = null;
+                    if (!string.IsNullOrWhiteSpace(product.Name) && !string.IsNullOrWhiteSpace(product.Price))
+                    {
+                        trackedItemsDataGridView.Rows.Add(product.Name, product.Price);
+                    }
                 }
 
-                _cts.Dispose();
-                _cts = null;
+                SaveConfig();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки файла: {ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void scrolDelay_ValueChanged(object sender, EventArgs e)
+        private void DeleteTrackedItems(object sender, EventArgs e)
         {
-            if (scrolDelay.Value < scrolDelay.Minimum)
-            {
-                scrolDelay.Value = scrolDelay.Minimum;
-            }
-            if (scrolDelay.Value > scrolDelay.Maximum)
-            {
-                scrolDelay.Value = scrolDelay.Maximum;
-            }
+            trackedItemsDataGridView.Rows.Clear();
+            _config.TrackedItems.Clear();
+            _fileManager.SaveToJson(_configPath, _config);
+        }
 
-            string baseDirectory = Directory.GetCurrentDirectory();
-            string filePath = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
-            string json;
-            DataRandom random = new DataRandom();
-            random.Delay = scrolDelay.Value;
-            random.Speed = inputScrol.Value;
+        private void dragDropPanel_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                dragDropInfoLabel.Text = "Отпустите файл для загрузки";
+                dragDropInfoLabel.ForeColor = Color.Blue;
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void dragDropPanel_DragLeave(object sender, EventArgs e)
+        {
+            dragDropInfoLabel.Text = _currentDragText;
+            dragDropInfoLabel.ForeColor = SystemColors.ControlText;
+        }
+
+        private void dragDropPanel_DragDrop(object sender, DragEventArgs e)
+        {
             try
             {
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true, // Красивое форматирование
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // Для кириллицы
-                };
-                json = JsonSerializer.Serialize(random, options);
+                dragDropInfoLabel.Text = _currentDragText;
+                dragDropInfoLabel.ForeColor = SystemColors.ControlText;
 
-                if (!File.Exists(baseDirectory))
-                    Directory.CreateDirectory(baseDirectory + "\\Data\\");
-                if (!File.Exists(baseDirectory + "\\Data\\"))
-                    Directory.CreateDirectory(baseDirectory + "\\Data\\Serialize\\");
-                File.WriteAllText(filePath, json);
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files.Length == 1)
+                    {
+                        LoadFile(files[0]);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Пожалуйста, перетащите только один файл",
+                            "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                MessageBox.Show("Ошибка", "Не удолось сохранить данные.");
-                return;
+                MessageBox.Show($"Ошибка при обработке файла: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void inputScrol_ValueChanged(object sender, EventArgs e)
+        private bool ValidateProduct(Product product)
         {
-            if (inputScrol.Value < inputScrol.Minimum)
+            if (string.IsNullOrWhiteSpace(product.Name))
             {
-                inputScrol.Value = inputScrol.Minimum;
-            }
-            if (inputScrol.Value > inputScrol.Maximum)
-            {
-                inputScrol.Value = inputScrol.Maximum;
+                MessageBox.Show("Название предмета не может быть пустым", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
             }
 
-            string baseDirectory = Directory.GetCurrentDirectory();
-            string filePath = Directory.GetCurrentDirectory() + "\\Data\\Serialize\\Randomize.json";
-            string json;
-            DataRandom random = new DataRandom();
-            random.Delay = scrolDelay.Value;
-            random.Speed = inputScrol.Value;
-            try
+            if (!decimal.TryParse(product.Price, out _))
             {
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true, // Красивое форматирование
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // Для кириллицы
-                };
-                json = JsonSerializer.Serialize(random, options);
+                MessageBox.Show("Цена должна быть числом", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
 
-                if (!File.Exists(baseDirectory))
-                    Directory.CreateDirectory(baseDirectory + "\\Data\\");
-                if (!File.Exists(baseDirectory + "\\Data\\"))
-                    Directory.CreateDirectory(baseDirectory + "\\Data\\Serialize\\");
-                File.WriteAllText(filePath, json);
-            }
-            catch
-            {
-                MessageBox.Show("Ошибка", "Не удолось сохранить данные.");
-                return;
-            }
+            return true;
         }
-    }
-
-    public class Product
-    {
-        public string Name { get; set; }
-        public string Price { get; set; }
-    }
-    public class DataRandom
-    {
-        public decimal Delay {  get; set; }
-        public decimal Speed { get; set; }
     }
 }

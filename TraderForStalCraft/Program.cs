@@ -1,17 +1,18 @@
+using TraderForStalCraft.Scripts;
+using TraderForStalCraft.Scripts.HelperScripts;
+
 namespace TraderForStalCraft
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
-            Application.Run(new MainForm());
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            var fileManager = new FileManager();
+            Application.Run(new MainForm(fileManager));
         }
     }
 }

@@ -10,37 +10,46 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Data\Blueprints\1pageRecognition.png" />
-    <None Remove="Data\Blueprints\amountRecognition.png" />
-    <None Remove="Data\Blueprints\auctionRecognition.png" />
-    <None Remove="Data\Blueprints\balanceRecognition.png" />
-    <None Remove="Data\Blueprints\betRecognition.png" />
-    <None Remove="Data\Blueprints\buyout.png" />
-    <None Remove="Data\Blueprints\buyoutRecognition.png" />
-    <None Remove="Data\Blueprints\buyRecognition.png" />
-    <None Remove="Data\Blueprints\confirmRecognition.png" />
-    <None Remove="Data\Blueprints\falseOkButton.png" />
-    <None Remove="Data\Blueprints\leftSide.png" />
-    <None Remove="Data\Blueprints\Ok%28alert%29.png" />
-    <None Remove="Data\Blueprints\Ok%28Buy%29.png" />
+    <None Remove="Data\Blueprints\auctionActive.png" />
+    <None Remove="Data\Blueprints\auctionInactive - Копировать.png" />
+    <None Remove="Data\Blueprints\balance - Копировать.png" />
+    <None Remove="Data\Blueprints\balance.png" />
+    <None Remove="Data\Blueprints\currentPage1.png" />
+    <None Remove="Data\Blueprints\currentPage10.png" />
+    <None Remove="Data\Blueprints\currentPage2.png" />
+    <None Remove="Data\Blueprints\currentPage3.png" />
+    <None Remove="Data\Blueprints\currentPage4.png" />
+    <None Remove="Data\Blueprints\currentPage5.png" />
+    <None Remove="Data\Blueprints\currentPage6.png" />
+    <None Remove="Data\Blueprints\currentPage7.png" />
+    <None Remove="Data\Blueprints\currentPage8.png" />
+    <None Remove="Data\Blueprints\currentPage9.png" />
+    <None Remove="Data\Blueprints\page10 - Копировать.png" />
     <None Remove="Data\Blueprints\page10.png" />
-    <None Remove="Data\Blueprints\page11.png" />
-    <None Remove="Data\Blueprints\page12.png" />
-    <None Remove="Data\Blueprints\page13.png" />
+    <None Remove="Data\Blueprints\page2 - Копировать.png" />
     <None Remove="Data\Blueprints\page2.png" />
+    <None Remove="Data\Blueprints\page3 - Копировать.png" />
     <None Remove="Data\Blueprints\page3.png" />
+    <None Remove="Data\Blueprints\page4 - Копировать.png" />
     <None Remove="Data\Blueprints\page4.png" />
+    <None Remove="Data\Blueprints\page5 - Копировать.png" />
     <None Remove="Data\Blueprints\page5.png" />
+    <None Remove="Data\Blueprints\page6 - Копировать.png" />
     <None Remove="Data\Blueprints\page6.png" />
+    <None Remove="Data\Blueprints\page7 - Копировать.png" />
     <None Remove="Data\Blueprints\page7.png" />
+    <None Remove="Data\Blueprints\page8 - Копировать.png" />
     <None Remove="Data\Blueprints\page8.png" />
+    <None Remove="Data\Blueprints\page9 - Копировать.png" />
     <None Remove="Data\Blueprints\page9.png" />
-    <None Remove="Data\Blueprints\scrollRecognition.png" />
-    <None Remove="Data\Blueprints\SearchArea.png" />
+    <None Remove="Data\Blueprints\searchButton - Копировать.png" />
+    <None Remove="Data\Blueprints\searchButton.png" />
     <None Remove="Data\Blueprints\searchField.png" />
-    <None Remove="Data\Blueprints\searchRecognition.png" />
-    <None Remove="Data\Blueprints\skipToLastPage.png" />
-    <None Remove="Data\Blueprints\step.png" />
+    <None Remove="Data\Blueprints\sortingButtonNeed.png" />
+    <None Remove="Data\Blueprints\sortNeed.png" />
+    <None Remove="Data\Blueprints\sortNothing.png" />
+    <None Remove="Data\Blueprints\sortPure.png" />
+    <None Remove="Data\Blueprints\wordRare.png" />
     <None Remove="Data\traindata\eng.traineddata" />
     <None Remove="Data\traindata\rus.traineddata" />
   </ItemGroup>
@@ -56,98 +65,47 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Data\Blueprints\1pageRecognition.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\amountRecognition.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\auctionRecognition.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\balanceRecognition.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\betRecognition.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\buyout.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\buyoutRecognition.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\buyRecognition.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\confirmRecognition.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\falseOkButton.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\leftSide.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\Ok(alert).png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\Ok(Buy).png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <EmbeddedResource Include="Data\Blueprints\balance.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page10.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\page11.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\page12.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\page13.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page2.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page3.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page4.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page5.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page6.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page7.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page8.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page9.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\scrollRecognition.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\SearchArea.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <EmbeddedResource Include="Data\Blueprints\searchButton.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\searchField.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\searchRecognition.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <EmbeddedResource Include="Data\Blueprints\sortingButtonNeed.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\skipToLastPage.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\step.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <EmbeddedResource Include="Data\Blueprints\wordRare.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\traindata\eng.traineddata">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -155,6 +113,10 @@
     <EmbeddedResource Include="Data\traindata\rus.traineddata">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\Serialize\Save\" />
   </ItemGroup>
 
 </Project>
