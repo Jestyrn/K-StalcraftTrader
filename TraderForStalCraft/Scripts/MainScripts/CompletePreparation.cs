@@ -29,6 +29,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
             _sp = sp;
             _fileManager = fm;
             pathToFile = Path.Combine(pathToFile, "Recsts.json");
+            matches = new List<Rectangls>();
         }
 
         public void StartSetup()
@@ -74,7 +75,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
         private void WithoutSerialization()
         {
             _screen = _sp.CaptureScreen();
-            matches = _sp.GetMatches(_screen);
+            matches.AddRange(_sp.GetMatches(_screen));
 
             _fileManager.SaveToJson<List<Rectangls>>(pathToFile, matches);
         }

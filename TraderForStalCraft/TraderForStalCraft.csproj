@@ -10,10 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Data\Blueprints\amount.png" />
+    <None Remove="Data\Blueprints\auction.png" />
     <None Remove="Data\Blueprints\auctionActive.png" />
     <None Remove="Data\Blueprints\auctionInactive - Копировать.png" />
     <None Remove="Data\Blueprints\balance - Копировать.png" />
     <None Remove="Data\Blueprints\balance.png" />
+    <None Remove="Data\Blueprints\buy.png" />
     <None Remove="Data\Blueprints\currentPage1.png" />
     <None Remove="Data\Blueprints\currentPage10.png" />
     <None Remove="Data\Blueprints\currentPage2.png" />
@@ -26,6 +29,9 @@
     <None Remove="Data\Blueprints\currentPage9.png" />
     <None Remove="Data\Blueprints\page10 - Копировать.png" />
     <None Remove="Data\Blueprints\page10.png" />
+    <None Remove="Data\Blueprints\page11.png" />
+    <None Remove="Data\Blueprints\page12.png" />
+    <None Remove="Data\Blueprints\page13.png" />
     <None Remove="Data\Blueprints\page2 - Копировать.png" />
     <None Remove="Data\Blueprints\page2.png" />
     <None Remove="Data\Blueprints\page3 - Копировать.png" />
@@ -42,14 +48,12 @@
     <None Remove="Data\Blueprints\page8.png" />
     <None Remove="Data\Blueprints\page9 - Копировать.png" />
     <None Remove="Data\Blueprints\page9.png" />
+    <None Remove="Data\Blueprints\searchBtn.png" />
     <None Remove="Data\Blueprints\searchButton - Копировать.png" />
-    <None Remove="Data\Blueprints\searchButton.png" />
-    <None Remove="Data\Blueprints\searchField.png" />
-    <None Remove="Data\Blueprints\sortingButtonNeed.png" />
+    <None Remove="Data\Blueprints\sortMain.png" />
     <None Remove="Data\Blueprints\sortNeed.png" />
     <None Remove="Data\Blueprints\sortNothing.png" />
     <None Remove="Data\Blueprints\sortPure.png" />
-    <None Remove="Data\Blueprints\wordRare.png" />
     <None Remove="Data\traindata\eng.traineddata" />
     <None Remove="Data\traindata\rus.traineddata" />
   </ItemGroup>
@@ -66,10 +70,28 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Data\Blueprints\amount.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\auction.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\balance.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\buy.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page10.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page11.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page12.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\page13.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page2.png">
@@ -96,16 +118,10 @@
     <EmbeddedResource Include="Data\Blueprints\page9.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\searchButton.png">
+    <EmbeddedResource Include="Data\Blueprints\searchBtn.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\searchField.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\sortingButtonNeed.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Data\Blueprints\wordRare.png">
+    <EmbeddedResource Include="Data\Blueprints\sortMain.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\traindata\eng.traineddata">

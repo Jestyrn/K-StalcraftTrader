@@ -14,13 +14,14 @@ using NPOI.SS.Formula.Functions;
 using Org.BouncyCastle.Math;
 using Tesseract;
 using TraderForStalCraft.Data.Serialize;
+using TraderForStalCraft.Interfaces;
 using TraderForStalCraft.Scripts.HelperScripts;
 using WindowsInput;
 using ImageFormat = System.Drawing.Imaging.ImageFormat;
 
 namespace TraderForStalCraft.Scripts.MainScripts
 {
-	public class StartingScript
+	internal class StartingScript 
 	{
         public bool IsRunning;
 

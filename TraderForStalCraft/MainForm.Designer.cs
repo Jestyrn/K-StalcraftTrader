@@ -155,13 +155,13 @@ namespace TraderForStalCraft
             // 
             // Column3
             // 
-            Column3.HeaderText = "Лот";
+            Column3.HeaderText = "Желаемо";
             Column3.Name = "Column3";
             Column3.ReadOnly = true;
             // 
             // Column4
             // 
-            Column4.HeaderText = "Желаемо";
+            Column4.HeaderText = "Количество";
             Column4.Name = "Column4";
             Column4.ReadOnly = true;
             // 
@@ -424,10 +424,6 @@ namespace TraderForStalCraft
         private Label trackedItemsLabel;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
-        private DataGridViewTextBoxColumn Column1;
-        private DataGridViewTextBoxColumn Column2;
-        private DataGridViewTextBoxColumn Column3;
-        private DataGridViewTextBoxColumn Column4;
         private Label label1;
         private Button DeleteDataButton;
         private Button SaveDataButton;
@@ -437,5 +433,9 @@ namespace TraderForStalCraft
         private NumericUpDown inputScrol;
         private Label label3;
         private CheckBox SkipPagesCheckbox;
+        private DataGridViewTextBoxColumn Column1;
+        private DataGridViewTextBoxColumn Column2;
+        private DataGridViewTextBoxColumn Column3;
+        private DataGridViewTextBoxColumn Column4;
     }
 }

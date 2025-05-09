@@ -33,8 +33,16 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 			string tessDataPath = Directory.GetCurrentDirectory() + @"\Data\traindata\";
 			directory = path;
 			templates = new Dictionary<string, Bitmap>();
-			matches = new List<Rectangls>();
+			matches = new List<Rectangls>(); 
 			files = Directory.GetFiles(directory);
+
+			for (int i = 0; i < files.Length; i++)
+			{
+                Bitmap tempBitmap = new Bitmap(files[i]);
+				string fileName = Path.GetFileName(files[i]);
+				files[i] = fileName;
+				templates.Add(files[i], new Bitmap(tempBitmap));
+			}
 
 			tesEngine = new TesseractEngine(tessDataPath, "rus");
 		}
@@ -107,19 +115,44 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 			Rectangle tempRect = new Rectangle();
 			foreach (var item in templates)
 			{
+				tempRect = FindMatch(source, item.Value);
 				matches.Add(new Rectangls
 				{
 					Name = item.Key,
-					Bounds = Rectangle.Empty
+					Bounds = tempRect
 				});
 			}
 
 			return matches;
 		}
 
-		private Rectangle FindMatch(string file)
+		private Rectangle FindMatch(Bitmap source, Bitmap template)
 		{
-			return Rectangle.Empty;
+			Mat sourceMat = Emgu.CV.BitmapExtension.ToMat(source);
+			Mat templateMat = Emgu.CV.BitmapExtension.ToMat(template);
+
+			Mat sourceGray = new Mat();
+			Mat templateGray = new Mat();
+			CvInvoke.CvtColor(sourceMat, sourceGray, ColorConversion.Bgr2Gray);
+			CvInvoke.CvtColor(templateMat, templateGray, ColorConversion.Bgr2Gray);
+
+			Mat result = new Mat();
+
+			CvInvoke.MatchTemplate(sourceGray, templateGray, result, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed);
+			double minVal = 0, maxVal = 0, thred = 0.4;
+			Point minLoc = new Point();
+			Point maxLoc = new Point();
+
+			CvInvoke.MinMaxLoc(result, ref minVal, ref maxVal, ref minLoc, ref maxLoc);
+
+			if (maxVal >= thred)
+			{
+				return new Rectangle(maxLoc, template.Size);
+			}
+			else
+			{
+				return Rectangle.Empty;
+			}
 		}
 
 		public Dictionary<string, Bitmap> GetTemplates()

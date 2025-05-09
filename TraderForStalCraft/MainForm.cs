@@ -274,7 +274,6 @@ namespace TraderForStalCraft
 
         private void StartScript()
         {
-            // Проверка на запуск игры и активность окна игры.
             try
             {
                 if (_runningScript != null && _runningScript.IsRunning)

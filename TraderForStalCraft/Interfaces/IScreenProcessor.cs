@@ -8,7 +8,7 @@ using TraderForStalCraft.Scripts.HelperScripts;
 
 namespace TraderForStalCraft.Interfaces
 {
-    internal interface IScreenProcessor
+    public interface IScreenProcessor
     {
         public Bitmap CaptureScreen();
         public Bitmap CaptureArea(int x1, int y1, int x2, int y2);
