@@ -31,6 +31,9 @@ namespace TraderForStalCraft.Scripts.MainScripts
         private ScreenProcessor _screenProcessor;
         private CompletePreparation start;
         private FileManager _fileManager;
+        private SearchItems searchItems;
+
+        private int money;
 
         public StartingScript(decimal mouseDelay, decimal keyboardDelay, Logger logger, ScreenProcessor sp, FileManager fileManager)
         {
@@ -39,7 +42,9 @@ namespace TraderForStalCraft.Scripts.MainScripts
             _logger = logger;
             _screenProcessor = sp;
             start = new CompletePreparation(sp, fileManager);
+            searchItems = new SearchItems(_screenProcessor);
             _fileManager = fileManager;
+            money = 0;
             // получить битмапы шаблонов (передать путь, записать в локальную переменную)
         }
 
@@ -47,11 +52,12 @@ namespace TraderForStalCraft.Scripts.MainScripts
         {
             IsRunning = true;
             start.StartSetup();
+
             while (IsRunning && !cts.IsCancellationRequested)
             {
                 foreach (var item in itemsData)
                 {
-                    
+                    searchItems.StartSearch(item.Key, item.Value, start.GetMoney());
                 }
             }
         }

@@ -27,7 +27,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
         private int? _mouseDelay;
         private int? _keyboardDelay;
 
-        // Импорт WinAPI функций
+
         [DllImport("user32.dll")]
         private static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, nint dwExtraInfo);
         private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
@@ -137,6 +137,11 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             _inputSimulator.Keyboard.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_A);
             await Task.Delay(_keyboardDelay ?? 10);
             _inputSimulator.Keyboard.KeyPress(VirtualKeyCode.BACK);
+        }
+
+        public Point RectangleToPoint(Rectangle rect)
+        {
+            return new Point(rect.Size);
         }
 
         public void Dispose()

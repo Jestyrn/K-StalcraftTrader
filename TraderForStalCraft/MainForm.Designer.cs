@@ -55,6 +55,7 @@ namespace TraderForStalCraft
             dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
             toolTip = new ToolTip(components);
             backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            button1 = new Button();
             TabControll.SuspendLayout();
             MainPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)itemsDataGridView).BeginInit();
@@ -194,6 +195,7 @@ namespace TraderForStalCraft
             // 
             // SettingsPage
             // 
+            SettingsPage.Controls.Add(button1);
             SettingsPage.Controls.Add(SkipPagesCheckbox);
             SettingsPage.Controls.Add(inputScrol);
             SettingsPage.Controls.Add(scrolDelay);
@@ -380,6 +382,15 @@ namespace TraderForStalCraft
             dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
             dataGridViewTextBoxColumn2.ReadOnly = true;
             // 
+            // button1
+            // 
+            button1.Location = new Point(245, 48);
+            button1.Name = "button1";
+            button1.Size = new Size(75, 23);
+            button1.TabIndex = 13;
+            button1.Text = "button1";
+            button1.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -437,5 +448,6 @@ namespace TraderForStalCraft
         private DataGridViewTextBoxColumn Column2;
         private DataGridViewTextBoxColumn Column3;
         private DataGridViewTextBoxColumn Column4;
+        private Button button1;
     }
 }

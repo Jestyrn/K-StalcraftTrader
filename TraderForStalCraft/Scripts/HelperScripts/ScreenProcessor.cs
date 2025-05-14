@@ -113,9 +113,11 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 		public List<Rectangls> GetMatches(Bitmap source)
 		{
 			Rectangle tempRect = new Rectangle();
-			foreach (var item in templates)
+			Mat sourceMat = BitmapToMat(source);
+
+            foreach (var item in templates)
 			{
-				tempRect = FindMatch(source, item.Value);
+				tempRect = FindMatch(sourceMat, item.Value);
 				matches.Add(new Rectangls
 				{
 					Name = item.Key,
@@ -126,36 +128,56 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 			return matches;
 		}
 
-		private Rectangle FindMatch(Bitmap source, Bitmap template)
+		private Mat BitmapToMat(Bitmap source)
 		{
-			Mat sourceMat = Emgu.CV.BitmapExtension.ToMat(source);
-			Mat templateMat = Emgu.CV.BitmapExtension.ToMat(template);
+            Mat sourceMat = Emgu.CV.BitmapExtension.ToMat(source);
+            Mat sourceGray = new Mat();
+            CvInvoke.CvtColor(sourceMat, sourceGray, ColorConversion.Bgr2Gray);
+			return sourceGray;
+        }
 
-			Mat sourceGray = new Mat();
+        private Rectangle FindMatch(Mat source, Bitmap template)
+		{
+			Mat templateMat = Emgu.CV.BitmapExtension.ToMat(template);
 			Mat templateGray = new Mat();
-			CvInvoke.CvtColor(sourceMat, sourceGray, ColorConversion.Bgr2Gray);
 			CvInvoke.CvtColor(templateMat, templateGray, ColorConversion.Bgr2Gray);
 
 			Mat result = new Mat();
 
-			CvInvoke.MatchTemplate(sourceGray, templateGray, result, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed);
-			double minVal = 0, maxVal = 0, thred = 0.4;
+			CvInvoke.MatchTemplate(source, templateGray, result, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed);
+			double minVal = 0, maxVal = 0, thred = 0.8;
 			Point minLoc = new Point();
 			Point maxLoc = new Point();
 
 			CvInvoke.MinMaxLoc(result, ref minVal, ref maxVal, ref minLoc, ref maxLoc);
 
 			if (maxVal >= thred)
-			{
 				return new Rectangle(maxLoc, template.Size);
-			}
 			else
-			{
 				return Rectangle.Empty;
-			}
 		}
 
-		public Dictionary<string, Bitmap> GetTemplates()
+		public Rectangle FindMatch(Bitmap sourceScreen, string fileName)
+		{
+			Mat result = new Mat();
+			Mat template = BitmapToMat(templates[fileName]);
+			Mat source = BitmapToMat(sourceScreen);
+
+            CvInvoke.MatchTemplate(source, template, result, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed);
+
+            double minVal = 0, maxVal = 0, thred = 0.8;
+            Point minLoc = new Point();
+            Point maxLoc = new Point();
+
+            CvInvoke.MinMaxLoc(result, ref minVal, ref maxVal, ref minLoc, ref maxLoc);
+
+            if (maxVal >= thred)
+                return new Rectangle(maxLoc, template.Size);
+            else
+                return Rectangle.Empty;
+        }
+
+        public Dictionary<string, Bitmap> GetTemplates()
 		{
 			return templates;
 		}

@@ -27,6 +27,7 @@
     <None Remove="Data\Blueprints\currentPage7.png" />
     <None Remove="Data\Blueprints\currentPage8.png" />
     <None Remove="Data\Blueprints\currentPage9.png" />
+    <None Remove="Data\Blueprints\NeedSorting.png" />
     <None Remove="Data\Blueprints\page10 - Копировать.png" />
     <None Remove="Data\Blueprints\page10.png" />
     <None Remove="Data\Blueprints\page11.png" />
@@ -54,6 +55,7 @@
     <None Remove="Data\Blueprints\sortNeed.png" />
     <None Remove="Data\Blueprints\sortNothing.png" />
     <None Remove="Data\Blueprints\sortPure.png" />
+    <None Remove="Data\Blueprints\WorseSort.png" />
     <None Remove="Data\traindata\eng.traineddata" />
     <None Remove="Data\traindata\rus.traineddata" />
   </ItemGroup>
@@ -80,6 +82,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\buy.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\NeedSorting.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\page10.png">
@@ -122,6 +127,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\Blueprints\sortMain.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Data\Blueprints\WorseSort.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Data\traindata\eng.traineddata">
