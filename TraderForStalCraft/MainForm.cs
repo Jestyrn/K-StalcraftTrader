@@ -28,6 +28,9 @@ namespace TraderForStalCraft
 
         public MainForm(FileManager fileManager)
         {
+            // отредактировать главную таблицу
+            // Добавить возможность чистить таблицу
+            // Сделать загрузку(только по наличию файла) и очистку главной таблицы SearchItems.lot
             InitializeComponent();
 
             _fileManager = fileManager;

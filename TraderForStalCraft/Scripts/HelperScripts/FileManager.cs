@@ -39,13 +39,13 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             File.WriteAllText(path, content);
         }
 
-        public List<Rectangls> LoadFromJson(string path)
+        public T LoadFromJson<T>(string path)
         {
             try
             {
-                string json = ReadAllText(path);
-                return JsonSerializer.Deserialize<List<Rectangls>>(json, _jsonOptions) ??
-                       throw new InvalidDataException("Deserialization returned null");
+                string json = File.ReadAllText(path);
+                return JsonSerializer.Deserialize<T>(json, _jsonOptions)
+                    ?? throw new InvalidDataException("Deserialization returned null");
             }
             catch (Exception ex)
             {

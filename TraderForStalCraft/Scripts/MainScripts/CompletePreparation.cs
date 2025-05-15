@@ -36,6 +36,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
 
         public void StartSetup()
         {
+            // Узнать где находится окно (сходятся ли координаты элементов + "погрешность"(1-5 px))
             if (DetermineStatus())
                 WithSerialization();
             else
@@ -91,7 +92,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
         private void WithSerialization()
         {
             matches.Clear();
-            matches.AddRange(_fileManager.LoadFromJson(pathToFile));
+            matches.AddRange(_fileManager.LoadFromJson<List<Rectangls>>(pathToFile));
         }
 
         private void WithoutSerialization()
