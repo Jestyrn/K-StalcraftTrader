@@ -28,6 +28,8 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 		private string[] files;
 		private TesseractEngine tesEngine;
 
+		public Rectangle gameWindow { get; set; }
+
 		public ScreenProcessor(string path)
 		{
 			string tessDataPath = Directory.GetCurrentDirectory() + @"\Data\traindata\";
@@ -45,6 +47,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 			}
 
 			tesEngine = new TesseractEngine(tessDataPath, "rus");
+			gameWindow = new Rectangle();
 		}
 
 		public Bitmap CaptureScreen()
@@ -81,6 +84,14 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 
 		public Bitmap CaptureGame()
 		{
+			if (gameWindow.IsEmpty || (gameWindow.Width == 0) || (gameWindow.Height == 0))
+				throw new InvalidDataException("Координаты игры оказались неверными.");
+
+			CaptureArea(gameWindow.X, gameWindow.Y,
+				gameWindow.X + gameWindow.Width,
+				gameWindow.Y + gameWindow.Height);
+
+			// --- //
 			string gameName = "stalcraft";
 			Process[] process = Process.GetProcessesByName(gameName);
 

@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System.Diagnostics;
+using System.Windows.Forms;
 using Emgu.CV.Ocl;
 using MiNET.Blocks;
 using NPOI.SS.Formula.Functions;
@@ -270,15 +271,21 @@ namespace TraderForStalCraft
                 }
             };
 
-            // Заглушки для кнопок скрипта
+
             startButton.Click += (s, e) => StartScript();
             stopButton.Click += (s, e) => StopScript();
         }
 
         private void StartScript()
         {
+            Process[] gameProcesses = Process.GetProcessesByName("stalcraft");
             try
             {
+                if (gameProcesses.Length < 1 || gameProcesses == null)
+                {
+                    MessageBox.Show("Игра не запущена, не найден процесс stalcraft");
+                }
+
                 if (_runningScript != null && _runningScript.IsRunning)
                 {
                     MessageBox.Show("Скрипт уже запущен");

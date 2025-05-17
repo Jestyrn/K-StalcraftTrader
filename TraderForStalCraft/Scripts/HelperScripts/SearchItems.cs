@@ -15,6 +15,8 @@ namespace TraderForStalCraft.Scripts.HelperScripts
         private ParametesOfLot lot;
         private Bitmap screen;
 
+        public List<Rectangls> matches;
+
         public string Name { get; set; }
         public int NeedPrice { get; set; }
         public int Money { get; private set; }
@@ -38,22 +40,24 @@ namespace TraderForStalCraft.Scripts.HelperScripts
         private int heightLot;
 
         private bool nextItem = false;
+        public bool isRunning;
 
         internal SearchItems(ScreenProcessor screenProcessor)
         {
-            // Определить области указанных Rectangle
-            LotRectangle = new Rectangle(); /* LX - amount.png, UY - (amount.png.y + amount.png.height) вынести в переменную uy, RX - sortMain.png, DY - uy + heightLot */
-            PriceRectangle = new Rectangle(); /* LX - sortMain.png - step(отступ влево), UY - (sortMain.png.y + sortMain.png.height) вынести в переменную uy, RX - sortMain.png - step, DY - uy + heightLot */
-            AmountRectangle = new Rectangle(); /* LX - amount.png - step(отступ влево(тут возможно не надо)), UY - (amount.png.y + amount.png.height) вынести в переменную uy, RX - amount.png - step(тут возможно не надо), DY - uy + heightLot */
             // Убедится что точно 40 (отправить на тесты клиенту)
             heightLot = 40;
 
             Lots = 9;
-            // Scrolls = n
-            // Pages = m
+            Scroll = 5;
+            // Pages = "Найти, используя метод FindPages"
+            Page = 1;
+
             _sp = screenProcessor;
             _emulator = new InputEmulator();
             BuyButtons = new List<Rectangle>();
+            matches = new List<Rectangls>();
+
+            isRunning = true;
         }
 
         public void StartSearch(string name, int price, int money) 
@@ -63,33 +67,103 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             NeedPrice = price;
             Money = money;
 
+            Rectangle rect;
+            int stepAmount;
+            int stepSorting;
+
+            if (matches != null)
+            {
+                foreach (var item in matches)
+                {
+                    if (item.Name == "amount.png")
+                    {
+                        rect = item.Bounds;
+                        stepAmount = rect.Y + rect.Height;
+
+                        LotRectangle = new Rectangle(
+                            rect.X,
+                            rect.Y + rect.Height,
+                            0,
+                            stepAmount + heightLot);
+
+                        AmountRectangle = new Rectangle(
+                            rect.X - (rect.Width - rect.X),
+                            stepAmount,
+                            rect.Width - rect.X,
+                            stepAmount + heightLot);
+                    }
+                    else if (item.Name == "sortMain.png")
+                    {
+                        rect = item.Bounds;
+                        stepSorting = rect.Y + rect.Height;
+
+                        LotRectangle.Width = rect.X - LotRectangle.X;
+
+                        PriceRectangle = new Rectangle(
+                            rect.X - stepSorting,
+                            stepSorting,
+                            ((rect.X + rect.Width) + stepSorting) - (rect.X - stepSorting),
+                            stepSorting + heightLot);
+                    }
+                }
+            }
+            else
+                throw new InvalidDataException($"Переменная с совпадениями оказалась пустой: {nameof(matches)}");
+
             LookingAtPage();
+
             if (nextItem)
+                return;
+            else if (!isRunning)
                 return;
         }
 
         private void LookingAtPage()
         {
-            // Определить количество Page (количество страниц)
             for (int i = 0; i < Page; i++)
             {
+                // Определить количество страниц (передать в этот цикл)
+                // Нажимать на некст пейдж
+
                 LookingAtScroll();
                 if (nextItem)
                     return;
+                else if (!isRunning)
+                    return;
+
                 // скроллы закончились - некст пейдж, затем обнулить скроллы и войти в скроллы
+                //      1. Обнулить скроллы
+                //      2. Некст пейдж
+                //      3. Войти в сколлы
             }
         }
 
         private void LookingAtScroll()
         {
-            // Определить количество скроллов
             for (int i = 0; i < Scroll; i++)
             {
                 SearchLots();
                 if (nextItem)
                     return;
+                else if (!isRunning)
+                    return;
+
                 // видимые лоты закончились - скролл, затем повторить видимые лоты
+                // Сделать переменную для Scroll
+                // Сохранять туда положение скролл бара
+                // Сделать доступным для сериализации
+                // 
+                // 1. Зажать точку
+                // 2. Переместить вниз (до следующей точки)
+                // 3. Отпустить точку
+                // Запсать пройденное количество
+                // Передать это количество в SearchLots(), каждый просмотр лотов, делать скролл(количество)
+                // Реализовать задумку в SearchLots()
+
                 // скроллы закончились - некст пейдж, затем обнулить скроллы и войти в скроллы
+                //      1. Обнулить скроллы
+                //      2. Некст пейдж
+                //      3. Войти в сколлы
             }
         }
 
@@ -113,17 +187,12 @@ namespace TraderForStalCraft.Scripts.HelperScripts
                                         needPrice: NeedPrice
                                         );
 
-                // Релизовать метод EnoughtMoney
-                if (EnoughtMoney(Price))
-                {
-
-                }
-                else
-                {
+                if (!EnoughtMoney(Price))
                     nextItem = true;
-                }
 
                 if (nextItem)
+                    return;
+                else if (!isRunning)
                     return;
 
                 Price = CalculatePrice(Amount, Price);
@@ -151,16 +220,48 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 
         private bool EnoughtMoney(int price) 
         {
+            // Сравнить найденную стоимость с счетом
+            
+            // Если (Счет < стоимость)
+            //      - false
+            // Иначе 
+            //      - true
+
+            // Дополнительные проверки
+            // price == 0
+            // счет == 0
+
             return false;
         }
 
         private int CalculatePrice(int amount, int price)
         {
+            // Посчитать стоимость за 1ед
+
+            // return price / amount
+            // price - проверялось ранее, однозначно price != 0
+
+            // Дополнительные проверки
+            // amount == 0
+            //
+            // Убедится в корректности определения (область, цвет фона)
+            // Если все таки корреляция и валидация пройдены нормально - принять amount = 0
+
             return 0;
         }
 
         private bool CheckGuess(int price, int needPrice)
         {
+            // Проверка (Стоимость за 1 ед < Счет)
+            // price однозначно не null (price != 0)
+            // Money однозначно не null (money != 0)
+
+            // Проверка прошла успешно
+            // return true
+            // 
+            // Проверка прошла плохо
+            // return false
+            //
             return false;
         }
 
@@ -174,41 +275,33 @@ namespace TraderForStalCraft.Scripts.HelperScripts
                     PriceRectangle.Height
                     )));
 
-            // Сделать скрин после нажатия на лот
             screen = _sp.CaptureScreen();
-            // Найти кнопку "Купить"
             BuyButton = _sp.FindMatch(screen, "buy.png");
-            // Не нашлась - ошибка
             if ((BuyButton == null) || (BuyButton.IsEmpty) | (BuyButton.X == 0))
             {
                 throw new InvalidDataException("Кнопка купить не была найдена, она оказалась пустой");
             }
-            // Нажать по найденым координатам (в середину кнопки)
             await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(new Rectangle(
                 BuyButton.X + (BuyButton.Width / 2),
                 BuyButton.Y + (BuyButton.Height / 2),
                 BuyButton.Width,
                 BuyButton.Height)));
+
             // Запись нового элемента (где находится кнопка купить для лота n)
             BuyButtons.Add(BuyButton);
 
-            // Сделать скриншот после покупки
+            // Кнопка ОК
             screen = _sp.CaptureScreen();
-            // Найти "ОК"
-            // - Сделать новый шаблон и проверить его на работаспособность - Ok.png
             OkButton = _sp.FindMatch(screen, "Ok.png");
-            // Не нашлось - ошибка
             if ((OkButton == null) || (OkButton.IsEmpty) | (OkButton.X == 0))
             {
                 throw new InvalidDataException("Кнопка Ок не была найдена, она оказалась пустой");
             }
-            // Нажать по найденным координатам (в середину кнопки)
             await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(new Rectangle(
                 OkButton.X + (OkButton.Width / 2),
                 OkButton.Y + (OkButton.Height / 2),
                 OkButton.Width,
                 OkButton.Height)));
-            // Сериализация для кнопки "Купить" - переменная matches
         }
     }
 }

@@ -15,6 +15,7 @@ using Org.BouncyCastle.Math;
 using Tesseract;
 using TraderForStalCraft.Data.Serialize;
 using TraderForStalCraft.Interfaces;
+using TraderForStalCraft.Proprties;
 using TraderForStalCraft.Scripts.HelperScripts;
 using WindowsInput;
 using ImageFormat = System.Drawing.Imaging.ImageFormat;
@@ -32,6 +33,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
         private CompletePreparation start;
         private FileManager _fileManager;
         private SearchItems searchItems;
+        private List<Rectangls> matches;
 
         private int money;
 
@@ -52,18 +54,23 @@ namespace TraderForStalCraft.Scripts.MainScripts
         {
             IsRunning = true;
             start.StartSetup();
+            matches = new List<Rectangls>(start.Matches);
+            searchItems.matches.AddRange(matches);
+            searchItems.isRunning = IsRunning;
 
             while (IsRunning && !cts.IsCancellationRequested)
             {
                 foreach (var item in itemsData)
                 {
                     searchItems.StartSearch(item.Key, item.Value, start.GetMoney());
+                    // очистить поле поиска, ввести новый предмет
                 }
             }
         }
 
         public void Stop()
         {
+            searchItems.isRunning = false;
             IsRunning = false;
         }
     }
