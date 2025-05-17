@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NPOI.XSSF.Model;
+using SixLabors.Fonts;
 using TraderForStalCraft.Proprties;
 
 namespace TraderForStalCraft.Scripts.HelperScripts
@@ -44,11 +45,12 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 
         internal SearchItems(ScreenProcessor screenProcessor)
         {
-            // Убедится что точно 40 (отправить на тесты клиенту)
+            // Убедится что точно 40 (отправить на тесты клиенту) (получается тот же скриншот по размерам или нет) 
             heightLot = 40;
 
             Lots = 9;
             Scroll = 5;
+
             // Pages = "Найти, используя метод FindPages"
             Page = 1;
 
@@ -62,53 +64,33 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 
         public void StartSearch(string name, int price, int money) 
         {
-            // название предмета введено в поле? Нет - написать
             Name = name;
             NeedPrice = price;
             Money = money;
+            int offset = 0;
 
-            Rectangle rect;
-            int stepAmount;
-            int stepSorting;
+            List<Rectangls> amountAndSorting = new List<Rectangls>(matches.Where(x => (x.Name == "amount.png") || (x.Name == "sortMain.png")));
 
-            if (matches != null)
-            {
-                foreach (var item in matches)
-                {
-                    if (item.Name == "amount.png")
-                    {
-                        rect = item.Bounds;
-                        stepAmount = rect.Y + rect.Height;
+            LotRectangle = amountAndSorting.Where(x => x.Name == "amount.png").First().Bounds;
+            AmountRectangle = amountAndSorting.Where(x => x.Name == "sortMain.png").First().Bounds;
 
-                        LotRectangle = new Rectangle(
-                            rect.X,
-                            rect.Y + rect.Height,
-                            0,
-                            stepAmount + heightLot);
+            offset = LotRectangle.Y + LotRectangle.Height;
 
-                        AmountRectangle = new Rectangle(
-                            rect.X - (rect.Width - rect.X),
-                            stepAmount,
-                            rect.Width - rect.X,
-                            stepAmount + heightLot);
-                    }
-                    else if (item.Name == "sortMain.png")
-                    {
-                        rect = item.Bounds;
-                        stepSorting = rect.Y + rect.Height;
+            LotRectangle.Y = offset;
+            LotRectangle.Height = offset + heightLot;
 
-                        LotRectangle.Width = rect.X - LotRectangle.X;
+            AmountRectangle = new Rectangle(
+                LotRectangle.X - (LotRectangle.X - LotRectangle.Width),
+                offset,
+                LotRectangle.X - LotRectangle.Width,
+                offset + heightLot);
 
-                        PriceRectangle = new Rectangle(
-                            rect.X - stepSorting,
-                            stepSorting,
-                            ((rect.X + rect.Width) + stepSorting) - (rect.X - stepSorting),
-                            stepSorting + heightLot);
-                    }
-                }
-            }
-            else
-                throw new InvalidDataException($"Переменная с совпадениями оказалась пустой: {nameof(matches)}");
+            // поправить Y при некорректной работе
+            offset = AmountRectangle.Y + AmountRectangle.Height;
+            AmountRectangle.X -= offset;
+            AmountRectangle.Y = offset;
+            AmountRectangle.Width = AmountRectangle.Width + (2 * offset);
+            AmountRectangle.Height = offset + heightLot;
 
             LookingAtPage();
 
@@ -171,13 +153,13 @@ namespace TraderForStalCraft.Scripts.HelperScripts
         {
             for(int i = 0;i < Lots; i++)
             {
-                LotRectangle = new Rectangle(LotRectangle.X, LotRectangle.Y + (heightLot * i), LotRectangle.Width, LotRectangle.Height);
-
-                // Определить индивидульно PriceRectangle, AmountRectangle
+                LotRectangle.Y = LotRectangle.Y + (heightLot * i);
+                AmountRectangle.Y = AmountRectangle.Y + (heightLot * i);
 
                 Amount = _sp.ExtractInt(_sp.CaptureArea(AmountRectangle.X, AmountRectangle.Y, AmountRectangle.X + AmountRectangle.Width, AmountRectangle.Y + AmountRectangle.Height));
                 Price = _sp.ExtractInt(_sp.CaptureArea(PriceRectangle.X, PriceRectangle.Y, PriceRectangle.X + PriceRectangle.Width, PriceRectangle.Y + PriceRectangle.Height));
 
+                // куда-то сохранить это
                 lot = new ParametesOfLot(
                                         name: Name,
                                         balance: Money,

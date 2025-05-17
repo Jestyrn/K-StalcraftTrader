@@ -16,16 +16,15 @@ namespace TraderForStalCraft.Scripts.HelperScripts
         Task MoveMouseAsync(Point target, bool withClick = true, int steps = 20);
         Task InputTextAsync(string text);
         Task ClearFieldAsync();
-        void SetDelays(int? mouseDelay, int? keyboardDelay);
     }
 
     public class InputEmulator : IInputEmulator, IDisposable
     {
         private readonly IInputSimulator _inputSimulator;
-        private readonly Random _random;
+        private static Random _random;
         private bool _disposed;
-        private int? _mouseDelay;
-        private int? _keyboardDelay;
+        public static int? _mouseDelay { get; set; }
+        public static int? _keyboardDelay { get; set; }
 
 
         [DllImport("user32.dll")]
@@ -39,10 +38,12 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             _random = enableRandomization ? new Random() : null;
         }
 
-        public void SetDelays(int? mouseDelay, int? keyboardDelay)
+        public static void SetDelays(int? mouseDelay, int? keyboardDelay)
         {
             _mouseDelay = mouseDelay;
             _keyboardDelay = keyboardDelay;
+
+            _random = new Random();
         }
 
         public async Task MoveMouseAsync(Point target, bool withClick = true, int steps = 20)

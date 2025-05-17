@@ -34,6 +34,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
         private FileManager _fileManager;
         private SearchItems searchItems;
         private List<Rectangls> matches;
+        private InputEmulator emulator;
 
         private int money;
 
@@ -45,9 +46,9 @@ namespace TraderForStalCraft.Scripts.MainScripts
             _screenProcessor = sp;
             start = new CompletePreparation(sp, fileManager);
             searchItems = new SearchItems(_screenProcessor);
+            emulator = new InputEmulator();
             _fileManager = fileManager;
             money = 0;
-            // получить битмапы шаблонов (передать путь, записать в локальную переменную)
         }
 
         internal void Start(Dictionary<string, int> itemsData, CancellationToken cts, bool skipPages)
@@ -62,8 +63,13 @@ namespace TraderForStalCraft.Scripts.MainScripts
             {
                 foreach (var item in itemsData)
                 {
+                    emulator.MoveMouseAsync(start.SearchField.Location);
+                    emulator.InputTextAsync(item.Key);
+
                     searchItems.StartSearch(item.Key, item.Value, start.GetMoney());
-                    // очистить поле поиска, ввести новый предмет
+
+                    emulator.MoveMouseAsync(start.SearchField.Location);
+                    emulator.ClearFieldAsync();
                 }
             }
         }

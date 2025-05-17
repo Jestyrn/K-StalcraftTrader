@@ -19,9 +19,6 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 {
 	class ScreenProcessor : IScreenProcessor
     {
-		[DllImport("user32.dll")]
-		private static extern Rectangle GetRectangle(IntPtr ptr, out Rectangle rect);
-
 		private string directory;
 		private Dictionary<string, Bitmap> templates;
 		private List<Rectangls> matches;
@@ -87,24 +84,9 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 			if (gameWindow.IsEmpty || (gameWindow.Width == 0) || (gameWindow.Height == 0))
 				throw new InvalidDataException("Координаты игры оказались неверными.");
 
-			CaptureArea(gameWindow.X, gameWindow.Y,
-				gameWindow.X + gameWindow.Width,
-				gameWindow.Y + gameWindow.Height);
-
-			// --- //
-			string gameName = "stalcraft";
-			Process[] process = Process.GetProcessesByName(gameName);
-
-			if (process.Length == 0)
-				throw new InvalidOperationException("Игра не запущена");
-
-			Process gameProc = process[0];
-
-			IntPtr ptr = gameProc.MainWindowHandle;
-			Rectangle gameRectangele = new Rectangle();
-			GetRectangle(ptr, out gameRectangele);
-
-			return new Bitmap(gameRectangele.Width, gameRectangele.Height);
+			return CaptureArea(gameWindow.X, gameWindow.Y,
+								gameWindow.X + gameWindow.Width,
+								gameWindow.Y + gameWindow.Height);
 		}
 
 		public int ExtractInt(Bitmap source)
@@ -123,6 +105,9 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 
 		public List<Rectangls> GetMatches(Bitmap source)
 		{
+			int stepX = Screen.PrimaryScreen.Bounds.Width - gameWindow.Width;
+			int stepY = Screen.PrimaryScreen.Bounds.Height - gameWindow.Height;
+
 			Rectangle tempRect = new Rectangle();
 			Mat sourceMat = BitmapToMat(source);
 
@@ -132,8 +117,12 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 				matches.Add(new Rectangls
 				{
 					Name = item.Key,
-					Bounds = tempRect
-				});
+					Bounds = new Rectangle(
+                        tempRect.X + stepX,
+						tempRect.Y + stepY,
+						tempRect.Width,
+						tempRect.Height)
+                });
 			}
 
 			return matches;

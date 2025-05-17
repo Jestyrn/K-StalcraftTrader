@@ -36,7 +36,7 @@ namespace TraderForStalCraft
 
             _fileManager = fileManager;
             _serializeHeaderPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Serialize", "Save");
-            _serializePath = Path.Combine(Directory.GetCurrentDirectory(),"Data", "Blueprints");
+            _serializePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Blueprints");
             _configPath = Path.Combine(_serializeHeaderPath, "Config.json");
 
             InitializeDragDropSystem();
@@ -306,6 +306,10 @@ namespace TraderForStalCraft
 
                 _cts = new CancellationTokenSource();
                 _runningScript = new StartingScript(scrolDelay.Value, inputScrol.Value, _logger, screenProcessor, _fileManager);
+
+                InputEmulator.SetDelays(
+                    int.TryParse(scrolDelay.Value.ToString(), out int scroll) ? scroll : 0, 
+                    int.TryParse(inputScrol.Value.ToString(), out int input) ? input : 0);
 
                 Task.Run(() => _runningScript.Start(itemsData, _cts.Token, SkipPagesCheckbox.Checked));
             }

@@ -14,7 +14,22 @@ namespace TraderForStalCraft.Scripts.MainScripts
 {
     internal class CompletePreparation
     {
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
         public List<Rectangls> Matches {  get; private set; }
+
+        public Rectangle SearchField { get; private set; }
+        public Rectangle SearchButton { get; private set; }
 
         public static string pathToFile;
         private bool IsSerialized;
@@ -25,10 +40,6 @@ namespace TraderForStalCraft.Scripts.MainScripts
 
         private string pathLogs = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         private Rectangle Window;
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetWindow();
-        private static extern Rectangle GetWindowRect(IntPtr hwd, out Rectangle rect);
 
         public CompletePreparation(ScreenProcessor sp, FileManager fm)
         {
@@ -45,18 +56,22 @@ namespace TraderForStalCraft.Scripts.MainScripts
         {
             Process game = Process.GetProcessesByName("stalcraft")[0];
             IntPtr ptr = game.MainWindowHandle;
-            Rectangle rect = new Rectangle();
 
-            GetWindowRect(ptr, out rect);
+            GetWindowRect(ptr, out RECT rect);
+            Rectangle rectangle = new Rectangle(
+                rect.Left,
+                rect.Top,
+                rect.Right - rect.Left,
+                rect.Bottom - rect.Top);
 
-            if (rect.IsEmpty || (rect.X == 0))
+            if (rectangle.Width == 0)
             {
                 throw new InvalidDataException("Не удалось определить область игры");
             }
             else
             {
-                _sp.gameWindow = rect;
-                return rect;
+                _sp.gameWindow = rectangle;
+                return rectangle;
             }
         }
 
@@ -74,27 +89,34 @@ namespace TraderForStalCraft.Scripts.MainScripts
                 WithoutSerialization();
             }
 
-            ReceivSearchAsync();
-            SetupSortingAsync();
+           ReceivSearchAsync();
+           SetupSortingAsync();
         }
 
         public int GetMoney()
         {
             int money = 0;
-            Rectangle rect = new Rectangle();
 
-            foreach (var item in Matches)
-            {
-                if (item.Name == "balance.png")
-                {
-                    rect = item.Bounds;
-                }
-            }
+            List<Rectangls> commonPoints = new List<Rectangls>(Matches.Where(x => (x.Name == "balance.png") || (x.Name == "searchBtn.png")));
 
-            // найти норм корды для "Счет" - нужна именно сумма
-            // если х счета больше чем х игры - пизда, что-то не так
-            if (rect.X != 0)
-                money = _sp.ExtractInt(_sp.CaptureArea(rect.X, rect.Y, rect.X + rect.Width, rect.Y + rect.Height));
+            Rectangle matchBalance = commonPoints.Where(x => x.Name == "balance.png").First().Bounds;
+            Rectangle matchSearch = commonPoints.Where(x => x.Name == "searchBtn.png").First().Bounds;
+
+            Rectangle balance = new Rectangle(
+                matchBalance.X,
+                matchBalance.Y,
+                (matchSearch.X + (matchSearch.Width / 2)) - (matchBalance.X + matchBalance.Width),
+                matchBalance.Height);
+
+            if (Window.X > balance.X || Window.Y > balance.Y)
+                throw new InvalidDataException("Баланс вне области игры");
+
+            if (!balance.IsEmpty)
+                money = _sp.ExtractInt(_sp.CaptureArea(
+                    balance.X, 
+                    balance.Y, 
+                    balance.X + balance.Width, 
+                    balance.Y + balance.Height));
 
             return money;
         }
@@ -102,37 +124,29 @@ namespace TraderForStalCraft.Scripts.MainScripts
         private bool DetermineStatus()
         {
             if (_fileManager.Exists(pathToFile))
-            {
                 return true;
-            }
             else
-            {
                 return false;
-            }
         }
+
         private bool StateCoordinates()
         {
             Rectangle searchMatches = new Rectangle();
+
+            try
+            {
+                searchMatches = Matches.Where(x => x.Name == "searchBtn.png").First().Bounds;
+            }
+            catch (Exception ex)
+            { return false; }
+
             Rectangle searchFree = _sp.FindMatch(_sp.CaptureGame(), "searchBtn.png");
             int count = 0;
 
-            foreach (var rect in Matches)
-            {
-                if (rect.Name == "searchBtn.png")
-                {
-                    searchMatches = rect.Bounds;
-                }
-
-                if ((rect.Bounds.X == 0) & (rect.Bounds.Y == 0) & (rect.Bounds.Width == 0) & (rect.Bounds.Height == 0))
-                {
-                    count++;
-                }
-            }
+            count = Matches.Count(x => x.Bounds.Width == 0);
 
             if ((searchFree.X == searchMatches.X) & (count == 0))
-            {
                 return true;
-            }
 
             return false;
         }
@@ -148,54 +162,25 @@ namespace TraderForStalCraft.Scripts.MainScripts
             _screen = _sp.CaptureGame();
             Matches.Clear();
             Matches.AddRange(_sp.GetMatches(_screen));
-            // _fileManager.SaveToJson<List<Rectangls>>(pathToFile, matches);
-            // сделать сериализацию на каждом этапе получения новых координат (ок, кнопки купить)
+            
+            _fileManager.SaveToJson<List<Rectangls>>(pathToFile, Matches);
         }
 
         private async Task ReceivSearchAsync()
         {
-            Rectangle button = new Rectangle();
-            Rectangle field = new Rectangle();
+            SearchButton = Matches.Where(x => x.Name == "searchBtn.png").First().Bounds;
+            SearchField = new Rectangle(
+                SearchButton.X - SearchButton.Width,
+                SearchButton.Y - (SearchButton.Height/2),
+                SearchButton.Width,
+                SearchButton.Height / 2);
 
-            foreach (Rectangls item in Matches)
-            {
-                if (item.Name == "searchBtn.png")
-                {
-                    if (item.Bounds.Width != 0)
-                    {
-                        button = item.Bounds;
-                        field = item.Bounds;
-                        field.X = item.Bounds.X - item.Bounds.Width;
+            if ((SearchField.Width == 0) || (SearchButton.Width == 0))
+                throw new InvalidDataException("Определены не верные координаты точек для:" +
+                    $"Кнопка поиск: X {SearchButton.X}, Wigth {SearchButton.Width}\n" +
+                    $"Поле поиска: X {SearchField.X}, Width {SearchField.Width}\n");
 
-                        return;
-                    }
-                    else
-                    {
-                        throw new InvalidDataException("Не найдена точка для сериализации - Кнопка поиска\n" +
-                                                       "Возможные проблемы: \n" +
-                                                       "1. Отсутствует изображение шаблона (searchBtn.png)\n" +
-                                                       "2. Не найдено совпадение по шаблону (на скриншоте не было игры))\n\n" +
-                                                       "Варианты решения:\n" +
-                                                       "1. поменяйте положение окна\n" +
-                                                      $"2. вручную удалите файл {pathToFile}\n" +
-                                                       "3. переустановите программу");
-                    }
-                }
-            }
-
-            if ((button.X == 0) | (field.X == 0))
-            {
-                throw new InvalidDataException("Не найдена точка для сериализации - Кнопка поиска\n" +
-                                               "Возможные проблемы: \n" +
-                                               "1. Отсутствует изображение шаблона (searchBtn.png)\n" +
-                                               "2. Не найдено совпадение по шаблону (на скриншоте не было игры))\n\n" +
-                                               "Варианты решения:\n" +
-                                               "1. поменяйте положение окна\n" +
-                                              $"2. вручную удалите файл {pathToFile}\n" +
-                                               "3. переустановите программу");
-            }
-
-            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(field));
+            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(SearchField)); // а кд учитывается? (если есть)
             await _emulator.ClearFieldAsync();
         }
 
@@ -204,102 +189,46 @@ namespace TraderForStalCraft.Scripts.MainScripts
             bool isSorted = false;
             int cnt = 0;
 
-            Rectangle worse = new Rectangle();
-            Rectangle need = new Rectangle();
-            Rectangle main = new Rectangle();
+            List<Rectangls> needRects = new List<Rectangls>(Matches.Where(x => (x.Name == "WorseSort.png") || (x.Name == "NeedSorting.png") || (x.Name == "sortMain.png")));
 
-            string type = "no";
+            Rectangle worse = needRects.Where(x => x.Name == "WorseSort.png").First().Bounds;
+            Rectangle need = needRects.Where(x => x.Name == "NeedSorting.png").First().Bounds;
+            Rectangle main = needRects.Where(x => x.Name == "sortMain.png").First().Bounds;
 
-            while ((!isSorted) | (cnt < 5))
+            if (main.IsEmpty)
+                throw new InvalidDataException("Кнопка сортировки не была найдена (не возможно установить нужную сортировку)");
+
+            while ((!isSorted) || (cnt != 5))
             {
-                foreach (Rectangls item in Matches)
+                if (!worse.IsEmpty)
                 {
-                    switch (item.Name)
+                    await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(main));
+
+                    need = _sp.FindMatch(_sp.CaptureGame(), "NeedSorting.png");
+                    if (!need.IsEmpty)
                     {
-                        case "WorseSort.png":
-                            if (item.Bounds.X != 0)
-                            {
-                                worse = item.Bounds;
-                                type = "worse";
-                            }
-                            else
-                            {
-                                return;
-                            }
-                            break;
-
-                        case "NeedSorting.png":
-                            if (item.Bounds.X != 0)
-                            {
-                                need = item.Bounds;
-                                type = "need";
-                            }
-                            else
-                            {
-                                return;
-                            }
-                            break;
-
-                        case "sortMain.png":
-                            if (item.Bounds.X != 0)
-                            {
-                                main = item.Bounds;
-                                break;
-                            }
-                            else
-                            {
-                                return;
-                            }
-                    }
-                }
-
-
-                // посмотреть что получится из верхней проверки (если 0, надо полностью выйти)
-                switch (type)
-                {
-                    case "need":
                         isSorted = true;
                         return;
-
-                    case "worse":
-                        if (main.X != 0)
-                        {
-                            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(main));
-                            isSorted = true;
-                            break;
-                        }
-                        else
-                        {
-                            return; 
-                        }
-
-                    case "no":
-                        if (main.X != 0)
-                        {
-                            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(main));
-                            _screen = _sp.CaptureGame();
-                            worse = _sp.FindMatch(_screen, "WorseSort.png");
-                            need = _sp.FindMatch(_screen, "NeedSorting.png");
-                            break;
-                        }
-                        else
-                        {
-                            return;
-                        }
+                    }
+                }
+                else if (!need.IsEmpty)
+                {
+                    isSorted = true;
+                    cnt = 0;
+                    return;
+                }
+                else
+                {
+                    await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(main));
+                    worse = _sp.FindMatch(_sp.CaptureGame(), "WorseSort.png");
+                    need = _sp.FindMatch(_sp.CaptureGame(), "NeedSorting.png");
                 }
 
                 cnt++;
 
                 if (cnt == 5)
-                {
-                    throw new InvalidDataException("Неудается определить и настроить сортировку,\n" +
-                        "поменяйте положение окна, и запустите снова");
-                }
-                else if ((main == null) | (main.IsEmpty) | (main == Rectangle.Empty) | (main.X == 0))
-                {
-                    throw new InvalidDataException("Неудается определить положение сортировки,\n" +
-                        "поменяйте положение окна, и запустите снова");
-                }
+                    throw new Exception("Использованы все попытки(5) на выставление сортировки");
+
             }
         }
     }

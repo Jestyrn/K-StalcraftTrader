@@ -37,6 +37,7 @@ namespace TraderForStalCraft
             foundItemsLabel = new Label();
             boughtLabel = new Label();
             SettingsPage = new TabPage();
+            button1 = new Button();
             SkipPagesCheckbox = new CheckBox();
             inputScrol = new NumericUpDown();
             scrolDelay = new NumericUpDown();
@@ -55,7 +56,6 @@ namespace TraderForStalCraft
             dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
             toolTip = new ToolTip(components);
             backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
-            button1 = new Button();
             TabControll.SuspendLayout();
             MainPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)itemsDataGridView).BeginInit();
@@ -216,6 +216,15 @@ namespace TraderForStalCraft
             SettingsPage.TabIndex = 1;
             SettingsPage.Text = "Настройки";
             SettingsPage.UseVisualStyleBackColor = true;
+            // 
+            // button1
+            // 
+            button1.Location = new Point(245, 48);
+            button1.Name = "button1";
+            button1.Size = new Size(75, 23);
+            button1.TabIndex = 13;
+            button1.Text = "button1";
+            button1.UseVisualStyleBackColor = true;
             // 
             // SkipPagesCheckbox
             // 
@@ -381,15 +390,6 @@ namespace TraderForStalCraft
             dataGridViewTextBoxColumn2.HeaderText = "Макс. цена";
             dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
             dataGridViewTextBoxColumn2.ReadOnly = true;
-            // 
-            // button1
-            // 
-            button1.Location = new Point(245, 48);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 13;
-            button1.Text = "button1";
-            button1.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
