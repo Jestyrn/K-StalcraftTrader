@@ -250,12 +250,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
         private async Task BuyLot()
         {
             // Нажать на стоимость лота, которую нашли
-            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(new Rectangle(
-                    PriceRectangle.X + (PriceRectangle.Width / 2),
-                    PriceRectangle.Y + (PriceRectangle.Height/ 2),
-                    PriceRectangle.Width,
-                    PriceRectangle.Height
-                    )));
+            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(PriceRectangle.X + (PriceRectangle.Width / 2),PriceRectangle.Y + (PriceRectangle.Height/ 2)));
 
             screen = _sp.CaptureScreen();
             BuyButton = _sp.FindMatch(screen, "buy.png");
@@ -263,11 +258,8 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             {
                 throw new InvalidDataException("Кнопка купить не была найдена, она оказалась пустой");
             }
-            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(new Rectangle(
-                BuyButton.X + (BuyButton.Width / 2),
-                BuyButton.Y + (BuyButton.Height / 2),
-                BuyButton.Width,
-                BuyButton.Height)));
+
+            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(BuyButton.X + (BuyButton.Width / 2), BuyButton.Y + (BuyButton.Height / 2)));
 
             // Запись нового элемента (где находится кнопка купить для лота n)
             BuyButtons.Add(BuyButton);
@@ -279,11 +271,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             {
                 throw new InvalidDataException("Кнопка Ок не была найдена, она оказалась пустой");
             }
-            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(new Rectangle(
-                OkButton.X + (OkButton.Width / 2),
-                OkButton.Y + (OkButton.Height / 2),
-                OkButton.Width,
-                OkButton.Height)));
+            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(OkButton.X + (OkButton.Width / 2), OkButton.Y + (OkButton.Height / 2)));
         }
     }
 }

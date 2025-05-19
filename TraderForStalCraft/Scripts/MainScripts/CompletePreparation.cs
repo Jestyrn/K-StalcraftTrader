@@ -64,6 +64,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
                 rect.Right - rect.Left,
                 rect.Bottom - rect.Top);
 
+
             if (rectangle.Width == 0)
             {
                 throw new InvalidDataException("Не удалось определить область игры");
@@ -75,7 +76,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
             }
         }
 
-        public void StartSetup()
+        public async Task StartSetup()
         {
             if (DetermineStatus())
             {
@@ -171,7 +172,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
             SearchButton = Matches.Where(x => x.Name == "searchBtn.png").First().Bounds;
             SearchField = new Rectangle(
                 SearchButton.X - SearchButton.Width,
-                SearchButton.Y - (SearchButton.Height/2),
+                SearchButton.Y + (SearchButton.Height/2),
                 SearchButton.Width,
                 SearchButton.Height / 2);
 
@@ -180,8 +181,20 @@ namespace TraderForStalCraft.Scripts.MainScripts
                     $"Кнопка поиск: X {SearchButton.X}, Wigth {SearchButton.Width}\n" +
                     $"Поле поиска: X {SearchField.X}, Width {SearchField.Width}\n");
 
-            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(SearchField)); // а кд учитывается? (если есть)
-            await _emulator.ClearFieldAsync();
+            bool check = false;
+            _emulator.MoveMouseAsync(_emulator.RectangleToPoint(SearchField.X, SearchField.Y));
+            while (!check)
+            {
+                if (((Cursor.Position.X < SearchField.X + 2) | (Cursor.Position.X > SearchField.X + 2)) & ((Cursor.Position.Y < SearchField.Y + 2) | (Cursor.Position.Y > SearchField.Y + 2)))
+                {
+                    _emulator.ClearFieldAsync();
+                    check = true;
+                }
+                else
+                {
+                    await Task.Delay(10);
+                }
+            }
         }
 
         private async Task SetupSortingAsync()
@@ -198,11 +211,13 @@ namespace TraderForStalCraft.Scripts.MainScripts
             if (main.IsEmpty)
                 throw new InvalidDataException("Кнопка сортировки не была найдена (не возможно установить нужную сортировку)");
 
-            while ((!isSorted) || (cnt != 5))
+            while ((!isSorted) || (cnt != 10))
             {
-                if (!worse.IsEmpty)
+                if (worse.X != Window.X)
                 {
-                    await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(main));
+                    _emulator.MoveMouseAsync(_emulator.RectangleToPoint(main.X + (main.Width /2), main.Y + (main.Height/2)));
+
+                    await Task.Delay(500);
 
                     need = _sp.FindMatch(_sp.CaptureGame(), "NeedSorting.png");
                     if (!need.IsEmpty)
@@ -211,7 +226,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
                         return;
                     }
                 }
-                else if (!need.IsEmpty)
+                else if (need.X != Window.X)
                 {
                     isSorted = true;
                     cnt = 0;
@@ -219,14 +234,14 @@ namespace TraderForStalCraft.Scripts.MainScripts
                 }
                 else
                 {
-                    await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(main));
+                    _emulator.MoveMouseAsync(_emulator.RectangleToPoint(main.X + (main.Width / 2), main.Y + (main.Height / 2)));
                     worse = _sp.FindMatch(_sp.CaptureGame(), "WorseSort.png");
                     need = _sp.FindMatch(_sp.CaptureGame(), "NeedSorting.png");
                 }
 
                 cnt++;
 
-                if (cnt == 5)
+                if (cnt == 10)
                     throw new Exception("Использованы все попытки(5) на выставление сортировки");
 
             }

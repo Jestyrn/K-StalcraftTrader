@@ -51,10 +51,10 @@ namespace TraderForStalCraft.Scripts.MainScripts
             money = 0;
         }
 
-        internal void Start(Dictionary<string, int> itemsData, CancellationToken cts, bool skipPages)
+        internal async Task Start(Dictionary<string, int> itemsData, CancellationToken cts, bool skipPages)
         {
             IsRunning = true;
-            start.StartSetup();
+            await start.StartSetup();
             matches = new List<Rectangls>(start.Matches);
             searchItems.matches.AddRange(matches);
             searchItems.isRunning = IsRunning;

@@ -105,9 +105,6 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 
 		public List<Rectangls> GetMatches(Bitmap source)
 		{
-			int stepX = Screen.PrimaryScreen.Bounds.Width - gameWindow.Width;
-			int stepY = Screen.PrimaryScreen.Bounds.Height - gameWindow.Height;
-
 			Rectangle tempRect = new Rectangle();
 			Mat sourceMat = BitmapToMat(source);
 
@@ -118,8 +115,8 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 				{
 					Name = item.Key,
 					Bounds = new Rectangle(
-                        tempRect.X + stepX,
-						tempRect.Y + stepY,
+                        tempRect.X + gameWindow.X, 
+						tempRect.Y + gameWindow.Y,
 						tempRect.Width,
 						tempRect.Height)
                 });

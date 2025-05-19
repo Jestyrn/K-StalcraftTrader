@@ -78,7 +78,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
         private async Task PerformClickWithDelayAsync(Point target)
         {
             mouse_event(MOUSEEVENTF_LEFTDOWN, target.X, target.Y, 0, nint.Zero);
-            await Task.Delay(_random?.Next(_mouseDelay.Value / 2, _mouseDelay.Value) ?? _mouseDelay.Value);
+            await Task.Delay(10);
             mouse_event(MOUSEEVENTF_LEFTUP, target.X, target.Y, 0, nint.Zero);
         }
 
@@ -100,12 +100,25 @@ namespace TraderForStalCraft.Scripts.HelperScripts
                 }
 
                 Cursor.Position = new Point(newX, newY);
-                await Task.Delay(_mouseDelay.Value / steps);
+                Task.Delay(_mouseDelay.Value / steps);
             }
 
             if (withClick)
             {
-                await PerformClickWithDelayAsync(target);
+                bool check = false;
+
+                while (!check)
+                {
+                    if (((target.X < target.X+2) | (target.X > target.X + 2)) & ((target.Y < target.Y + 2) | (target.Y > target.Y + 2)))
+                    {
+                        await PerformClickWithDelayAsync(target);
+                        check = true;
+                    }
+                    else
+                    {
+                        Task.Delay(50);
+                    }
+                }
             }
         }
 
@@ -136,13 +149,12 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             if (_disposed) throw new ObjectDisposedException(nameof(InputEmulator));
 
             _inputSimulator.Keyboard.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_A);
-            await Task.Delay(_keyboardDelay ?? 10);
             _inputSimulator.Keyboard.KeyPress(VirtualKeyCode.BACK);
         }
 
-        public Point RectangleToPoint(Rectangle rect)
+        public Point RectangleToPoint(int x, int y)
         {
-            return new Point(rect.Size);
+            return new Point(x, y);
         }
 
         public void Dispose()
