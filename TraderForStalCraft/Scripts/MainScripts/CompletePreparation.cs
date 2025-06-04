@@ -104,10 +104,13 @@ namespace TraderForStalCraft.Scripts.MainScripts
             Rectangle matchBalance = commonPoints.Where(x => x.Name == "balance.png").First().Bounds;
             Rectangle matchSearch = commonPoints.Where(x => x.Name == "searchBtn.png").First().Bounds;
 
+            int rightSideBalance = matchBalance.X + matchBalance.Width;
+            int rightSideSearch = matchSearch.X + matchSearch.Width;
+
             Rectangle balance = new Rectangle(
-                matchBalance.X,
+                rightSideBalance,
                 matchBalance.Y,
-                (matchSearch.X + (matchSearch.Width / 2)) - (matchBalance.X + matchBalance.Width),
+                rightSideSearch - rightSideBalance,
                 matchBalance.Height);
 
             if (Window.X > balance.X || Window.Y > balance.Y)
@@ -185,18 +188,18 @@ namespace TraderForStalCraft.Scripts.MainScripts
             bool check = false;
             
             _emulator.MoveMouseAsync(_emulator.RectangleToPoint(SearchField.X, SearchField.Y));
-            Thread.Sleep(50);
             
             while (!check)
             {
                 if (((Cursor.Position.X < SearchField.X + 2) | (Cursor.Position.X > SearchField.X + 2)) & ((Cursor.Position.Y < SearchField.Y + 2) | (Cursor.Position.Y > SearchField.Y + 2)))
                 {
+                    Thread.Sleep(500);
                     _emulator.ClearFieldAsync();
                     check = true;
                 }
                 else
                 {
-                    Thread.Sleep(100);
+                    Thread.Sleep(500);
                     _emulator.MoveMouseAsync(_emulator.RectangleToPoint(SearchField.X, SearchField.Y));
                 }
             }
@@ -222,7 +225,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
                 {
                     _emulator.MoveMouseAsync(_emulator.RectangleToPoint(main.X + (main.Width /2), main.Y + (main.Height/2)));
 
-                    Task.Delay(500);
+                    Thread.Sleep(500);
 
                     need = _sp.FindMatch(_sp.CaptureGame(), "NeedSorting.png");
                     if (!need.IsEmpty)
