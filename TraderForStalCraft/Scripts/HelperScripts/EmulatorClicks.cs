@@ -11,14 +11,7 @@ using WindowsInput.Native;
 
 namespace TraderForStalCraft.Scripts.HelperScripts
 {
-    public interface IInputEmulator
-    {
-        Task MoveMouseAsync(Point target, bool withClick = true, int steps = 20);
-        Task InputTextAsync(string text);
-        Task ClearFieldAsync();
-    }
-
-    public class InputEmulator : IInputEmulator, IDisposable
+    public class InputEmulator : IDisposable
     {
         private readonly IInputSimulator _inputSimulator;
         private static Random _random;
@@ -46,7 +39,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             _random = new Random();
         }
 
-        public async Task MoveMouseAsync(Point target, bool withClick = true, int steps = 20)
+        public void MoveMouseAsync(Point target, bool withClick = true, int steps = 20)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(InputEmulator));
 
@@ -62,11 +55,11 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             if (_random == null || steps <= 1)
             {
                 Cursor.Position = target;
-                if (withClick) await PerformClickWithDelayAsync(target);
+                if (withClick) PerformClickWithDelayAsync(target);
                 return;
             }
 
-            await SmoothMoveWithDelayAsync(target, steps, withClick);
+            SmoothMoveWithDelayAsync(target, steps, withClick);
         }
 
         private void PerformClickImmediate(Point target)
@@ -144,7 +137,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             }
         }
 
-        public async Task ClearFieldAsync()
+        public void ClearFieldAsync()
         {
             if (_disposed) throw new ObjectDisposedException(nameof(InputEmulator));
 

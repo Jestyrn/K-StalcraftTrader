@@ -51,10 +51,10 @@ namespace TraderForStalCraft.Scripts.MainScripts
             money = 0;
         }
 
-        internal async Task Start(Dictionary<string, int> itemsData, CancellationToken cts, bool skipPages)
+        internal void Start(Dictionary<string, int> itemsData, CancellationToken cts, bool skipPages)
         {
             IsRunning = true;
-            await start.StartSetup();
+            start.StartSetup();
             matches = new List<Rectangls>(start.Matches);
             searchItems.matches.AddRange(matches);
             searchItems.isRunning = IsRunning;
@@ -64,11 +64,18 @@ namespace TraderForStalCraft.Scripts.MainScripts
                 foreach (var item in itemsData)
                 {
                     emulator.MoveMouseAsync(start.SearchField.Location);
+                    Thread.Sleep(200);
                     emulator.InputTextAsync(item.Key);
+                    Thread.Sleep(200);
+                    emulator.MoveMouseAsync(start.SearchButton.Location);
+                    Thread.Sleep(200);
+
 
                     searchItems.StartSearch(item.Key, item.Value, start.GetMoney());
 
+                    Thread.Sleep(200);
                     emulator.MoveMouseAsync(start.SearchField.Location);
+                    Thread.Sleep(200);
                     emulator.ClearFieldAsync();
                 }
             }

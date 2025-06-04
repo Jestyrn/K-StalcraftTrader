@@ -91,6 +91,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
             }
 
            ReceivSearchAsync();
+           Thread.Sleep(200);
            SetupSortingAsync();
         }
 
@@ -167,7 +168,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
             _fileManager.SaveToJson<List<Rectangls>>(pathToFile, Matches);
         }
 
-        private async Task ReceivSearchAsync()
+        private void ReceivSearchAsync()
         {
             SearchButton = Matches.Where(x => x.Name == "searchBtn.png").First().Bounds;
             SearchField = new Rectangle(
@@ -182,7 +183,10 @@ namespace TraderForStalCraft.Scripts.MainScripts
                     $"Поле поиска: X {SearchField.X}, Width {SearchField.Width}\n");
 
             bool check = false;
+            
             _emulator.MoveMouseAsync(_emulator.RectangleToPoint(SearchField.X, SearchField.Y));
+            Thread.Sleep(50);
+            
             while (!check)
             {
                 if (((Cursor.Position.X < SearchField.X + 2) | (Cursor.Position.X > SearchField.X + 2)) & ((Cursor.Position.Y < SearchField.Y + 2) | (Cursor.Position.Y > SearchField.Y + 2)))
@@ -192,12 +196,13 @@ namespace TraderForStalCraft.Scripts.MainScripts
                 }
                 else
                 {
-                    await Task.Delay(10);
+                    Thread.Sleep(100);
+                    _emulator.MoveMouseAsync(_emulator.RectangleToPoint(SearchField.X, SearchField.Y));
                 }
             }
         }
 
-        private async Task SetupSortingAsync()
+        private void SetupSortingAsync()
         {
             bool isSorted = false;
             int cnt = 0;
@@ -217,7 +222,7 @@ namespace TraderForStalCraft.Scripts.MainScripts
                 {
                     _emulator.MoveMouseAsync(_emulator.RectangleToPoint(main.X + (main.Width /2), main.Y + (main.Height/2)));
 
-                    await Task.Delay(500);
+                    Task.Delay(500);
 
                     need = _sp.FindMatch(_sp.CaptureGame(), "NeedSorting.png");
                     if (!need.IsEmpty)

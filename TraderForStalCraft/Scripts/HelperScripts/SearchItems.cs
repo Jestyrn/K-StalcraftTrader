@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -67,6 +68,24 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             Name = name;
             NeedPrice = price;
             Money = money;
+
+            if (money < price)
+            {
+                MessageBox.Show("Недостаточно средств на покупку товара (счет < минимальная стоимость)");
+                return;
+            }
+
+            if (money == 0)
+            {
+                MessageBox.Show("На счету совсем нет денег");
+                return;
+            }
+
+            if (price == 0)
+            {
+                MessageBox.Show($"Стоимость не может быть 0 (название лота {name})");
+            }
+
             int offset = 0;
 
             List<Rectangls> amountAndSorting = new List<Rectangls>(matches.Where(x => (x.Name == "amount.png") || (x.Name == "sortMain.png")));
@@ -102,6 +121,21 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 
         private void LookingAtPage()
         {
+            string pageName;
+            int pageNameToInt;
+
+            // проверить корректность определения
+            // Поиск страницы (от наибольшей к меньшей) - нашлось? Выход из цикла поиска
+            for (int i = 13; i != 0; i--)
+            {
+                pageName = matches.Where(x => x.Name == $"page{i}.png").First().Name;
+
+                if (pageName != null)
+                {
+                    // Посмотреть чему = i, и посмотреть чему = pageName
+                }
+            }
+
             for (int i = 0; i < Page; i++)
             {
                 // Определить количество страниц (передать в этот цикл)
@@ -117,6 +151,17 @@ namespace TraderForStalCraft.Scripts.HelperScripts
                 //      1. Обнулить скроллы
                 //      2. Некст пейдж
                 //      3. Войти в сколлы
+
+
+                // Проверить
+                Scroll = 0;
+
+                // Проверить, а что вообще написано? И как оно будет работать в реальности
+                // Происходит нажатие на "Некст пейдж", по номеру Page в matches
+                Rectangle tempPoint = matches.Where(x => x.Name.Contains(Page.ToString())).First().Bounds;
+                _emulator.MoveMouseAsync(new Point(tempPoint.X + tempPoint.Width / 2, tempPoint.Y + tempPoint.Height / 2));
+
+                // также скорее всего if Page > 13 - break;
             }
         }
 
@@ -203,7 +248,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
         private bool EnoughtMoney(int price) 
         {
             // Сравнить найденную стоимость с счетом
-            
+
             // Если (Счет < стоимость)
             //      - false
             // Иначе 
@@ -213,7 +258,15 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             // price == 0
             // счет == 0
 
-            return false;
+            if (price == 0)
+                return false;
+            else if (Money == 0)
+                return false;
+            else if (price < Money)
+                return true;
+            else return false;
+
+            // Написано в поезде - проверить
         }
 
         private int CalculatePrice(int amount, int price)
@@ -229,7 +282,11 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             // Убедится в корректности определения (область, цвет фона)
             // Если все таки корреляция и валидация пройдены нормально - принять amount = 0
 
-            return 0;
+            // Проверка (а мб вообще 0?) - Написанно в поезде - проверить
+            if (price == 0 || amount == 0)
+                return 0;
+            else
+                return price / amount;
         }
 
         private bool CheckGuess(int price, int needPrice)
@@ -244,13 +301,17 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             // Проверка прошла плохо
             // return false
             //
-            return false;
+
+            // написано в поезде - проверить
+            return price < needPrice;
+
+            // return false;
         }
 
         private async Task BuyLot()
         {
             // Нажать на стоимость лота, которую нашли
-            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(PriceRectangle.X + (PriceRectangle.Width / 2),PriceRectangle.Y + (PriceRectangle.Height/ 2)));
+            _emulator.MoveMouseAsync(_emulator.RectangleToPoint(PriceRectangle.X + (PriceRectangle.Width / 2),PriceRectangle.Y + (PriceRectangle.Height/ 2)));
 
             screen = _sp.CaptureScreen();
             BuyButton = _sp.FindMatch(screen, "buy.png");
@@ -259,7 +320,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
                 throw new InvalidDataException("Кнопка купить не была найдена, она оказалась пустой");
             }
 
-            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(BuyButton.X + (BuyButton.Width / 2), BuyButton.Y + (BuyButton.Height / 2)));
+            _emulator.MoveMouseAsync(_emulator.RectangleToPoint(BuyButton.X + (BuyButton.Width / 2), BuyButton.Y + (BuyButton.Height / 2)));
 
             // Запись нового элемента (где находится кнопка купить для лота n)
             BuyButtons.Add(BuyButton);
@@ -271,7 +332,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             {
                 throw new InvalidDataException("Кнопка Ок не была найдена, она оказалась пустой");
             }
-            await _emulator.MoveMouseAsync(_emulator.RectangleToPoint(OkButton.X + (OkButton.Width / 2), OkButton.Y + (OkButton.Height / 2)));
+            _emulator.MoveMouseAsync(_emulator.RectangleToPoint(OkButton.X + (OkButton.Width / 2), OkButton.Y + (OkButton.Height / 2)));
         }
     }
 }
