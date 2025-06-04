@@ -1,19 +1,21 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
-using Emgu.CV;
-using Emgu.CV.Structure;
-using Tesseract;
-using System.Collections.Concurrent;
-using TraderForStalCraft.Interfaces;
-using System.Runtime.InteropServices;
-using TraderForStalCraft.Scripts.HelperScripts;
-using TraderForStalCraft.Proprties;
-using System.Diagnostics;
+﻿using Emgu.CV;
 using Emgu.CV.CvEnum;
-using NPOI.HSSF.Record;
 using Emgu.CV.Reg;
+using Emgu.CV.Structure;
+using NPOI.HSSF.Record;
 using SharpAvi;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+using System.Windows;
+using Tesseract;
+using TraderForStalCraft.Interfaces;
+using TraderForStalCraft.Proprties;
+using TraderForStalCraft.Scripts.HelperScripts;
 using ImageFormat = System.Drawing.Imaging.ImageFormat;
+using Point = System.Drawing.Point;
 
 namespace TraderForStalCraft.Scripts.HelperScripts
 {
@@ -143,7 +145,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 
 			CvInvoke.MatchTemplate(source, templateGray, result, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed);
 			double minVal = 0, maxVal = 0, thred = 0.8;
-			Point minLoc = new Point();
+            Point minLoc = new Point();
 			Point maxLoc = new Point();
 
 			CvInvoke.MinMaxLoc(result, ref minVal, ref maxVal, ref minLoc, ref maxLoc);
@@ -157,7 +159,8 @@ namespace TraderForStalCraft.Scripts.HelperScripts
 		public Rectangle FindMatch(Bitmap sourceScreen, string fileName)
 		{
 			Mat result = new Mat();
-			Mat template = BitmapToMat(templates[fileName]);
+            Mat template = BitmapToMat(templates[fileName]);
+
 			Mat source = BitmapToMat(sourceScreen);
 
             CvInvoke.MatchTemplate(source, template, result, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed);
