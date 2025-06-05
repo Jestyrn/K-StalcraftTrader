@@ -66,16 +66,15 @@ namespace TraderForStalCraft.Scripts.MainScripts
                     emulator.MoveMouseAsync(start.SearchField.Location);
                     Thread.Sleep(200);
                     emulator.InputTextAsync(item.Key);
-                    Thread.Sleep(200);
+                    Thread.Sleep(500);
                     emulator.MoveMouseAsync(start.SearchButton.Location);
                     Thread.Sleep(200);
 
 
                     searchItems.StartSearch(item.Key, item.Value, start.GetMoney());
 
-                    Thread.Sleep(200);
                     emulator.MoveMouseAsync(start.SearchField.Location);
-                    Thread.Sleep(200);
+                    Thread.Sleep(500);
                     emulator.ClearFieldAsync();
                 }
             }
