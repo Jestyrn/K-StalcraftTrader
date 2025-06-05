@@ -30,6 +30,8 @@ namespace TraderForStalCraft.Scripts.HelperScripts
         public int Scroll { get; private set; }
         public int Page { get; private set; }
 
+        public int MaxPages { get; private set; }
+
         private Rectangle BuyButton;
         private Rectangle OkButton;
 
@@ -52,7 +54,6 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             Lots = 9;
             Scroll = 5;
 
-            // Pages = "Найти, используя метод FindPages"
             Page = 1;
 
             _sp = screenProcessor;
@@ -63,28 +64,53 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             isRunning = true;
         }
 
+        private int FindMaxPage()
+        {
+            int pageInt;
+
+            for (int i = 13; i != 0; i--)
+            {
+                Rectangle page = Rectangle.Empty;
+
+                if (i > 1)
+                {
+                    page = _sp.FindMatch(_sp.CaptureGame(), $"page{i}.png");
+                    if (!page.IsEmpty)
+                        break;
+                }
+
+                // поиск точек для поиска максимальной стр (нужна первая найденная)
+            }
+
+            return matches.Count; // replace
+        }
+
         public void StartSearch(string name, int price, int money) 
         {
             Name = name;
             NeedPrice = price;
             Money = money;
 
-            if (money < price)
-            {
-                MessageBox.Show("Недостаточно средств на покупку товара (счет < минимальная стоимость)");
-                return;
-            }
+            // Pages = "Найти, используя метод FindPages
+            MaxPages = FindMaxPage();
 
-            if (money == 0)
-            {
-                MessageBox.Show("На счету совсем нет денег");
-                return;
-            }
+            //if (money < price)
+            //{
+            //    MessageBox.Show("Недостаточно средств на покупку товара (счет < минимальная стоимость)\n" +
+            //        $"{price} < {NeedPrice}");
+            //    return;
+            //}
 
-            if (price == 0)
-            {
-                MessageBox.Show($"Стоимость не может быть 0 (название лота {name})");
-            }
+            //if (money == 0)
+            //{
+            //    MessageBox.Show("На счету совсем нет денег");
+            //    return;
+            //}
+
+            //if (price == 0)
+            //{
+            //    MessageBox.Show($"Стоимость не может быть 0 (название лота {name})");
+            //}
 
             int offset = 0;
 
@@ -122,7 +148,7 @@ namespace TraderForStalCraft.Scripts.HelperScripts
         private void LookingAtPage()
         {
             string pageName;
-            int pageNameToInt;
+            int lastPage;
 
             // проверить корректность определения
             // Поиск страницы (от наибольшей к меньшей) - нашлось? Выход из цикла поиска
@@ -130,9 +156,11 @@ namespace TraderForStalCraft.Scripts.HelperScripts
             {
                 pageName = matches.Where(x => x.Name == $"page{i}.png").First().Name;
 
-                if (pageName != null)
+                if (pageName != null && pageName.Contains(i.ToString()))
                 {
                     // Посмотреть чему = i, и посмотреть чему = pageName
+                    lastPage = i;
+                    break;
                 }
             }
 
