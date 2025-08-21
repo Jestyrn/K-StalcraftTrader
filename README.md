@@ -1,3 +1,5 @@
+# Rewrite
+
 # TraderForStalCraft - автоматизация аукциона STALCRAFT
 
 ## Поменять README и название
